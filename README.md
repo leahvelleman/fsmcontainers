@@ -2,7 +2,10 @@
 
 A Pythonic interface for finite state transducers.
 
-An FstMapping is a Python mapping -- an immutable, dictionary-like object -- that has strings as its keys and values and is
+Requres [Pynini](http://www.openfst.org/twiki/bin/view/GRM/Pynini), which itself requires [OpenFst](http://openfst.org), [re2](http://github.com/google/re2), Python 2.7, and a C++ 11 compiler to build. 
+
+
+An FstMapping is an immutable Python mapping that has strings as its keys and values and is
 backed by a finite state transducer. 
 
 ```python
