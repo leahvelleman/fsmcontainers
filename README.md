@@ -2,7 +2,8 @@
 
 A Pythonic interface for finite state transducers.
 
-An FstMapping is a Python mapping -- an immutable dictionary-like object -- backed by a finite state transducer. 
+An FstMapping is a Python mapping -- an immutable, dictionary-like object -- that has strings as its keys and values and is
+backed by a finite state transducer. 
 
 ```python
 >>> m = FstMapping({"a": "b"})
@@ -10,8 +11,8 @@ An FstMapping is a Python mapping -- an immutable dictionary-like object -- back
 "b"
 ```
 
-The library requires Pynini, and FstMappings can be constructed directly from Pynini transducers, as well as from dictionaries or any
-arguments that can be passed to the `dict()` constructor.
+The library requires Pynini, and FstMappings can be constructed directly from Pynini transducers, as well as from dictionaries or from 
+any combination of arguments that can be passed to the `dict()` constructor.
 
 ```python
 >>> import pynini
@@ -98,4 +99,6 @@ before stopping.
 * Priority union and priority composition operators (`/` and `%`?) for rule-based linguistic applications
 * Methods for taking closure etc without calling on Pynini functions
 * Automagic handling of sigmas in rewrite rules
+* Mutability?
 * Support for more FST libraries?
+* Conversion between FstSets and re2 regexes?
