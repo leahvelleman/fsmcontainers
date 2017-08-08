@@ -12,7 +12,7 @@ An FstMapping is a Python mapping -- a dictionary-like object -- backed by a fin
 
 ## Reversible, composable, concatenable, intersectable...
 
-Unlike regular dictionaries, they are reversible. The reverse can be accessed using the .inv property or the ~ operator.
+Unlike regular dictionaries, they are reversible. The reverse can be accessed using the `.inv` property or the `~` operator.
 
 ```python
 >>> m.inv["b"]
@@ -25,7 +25,7 @@ KeyError
 True
 ```
 
-Other common FST operators are supported as well: * for composition, + for concatenation, | for union, and & for intersection.
+Other common FST operators are supported as well: `*` for composition, `+` for concatenation, `|` for union, and `&` for intersection.
 
 ```python
 >>> n = FstMapping({"b": "c"})
@@ -78,3 +78,14 @@ For instance, this transducer maps a string of `a`s of any length to a string of
 If `m` is cyclic on its key side, `len(m)`, `m.keys()`, `m.values()` and `m.items()` raise errors. If `m` is cyclic on its value
 side and maps `k` to an infinite number of values, then `m[k]` and `m.get(k)` also raise errors.
 
+A FstMapping created using the `limit` keyword argument shows a different behavior. If `m = FstMapping( ... , limit=n)` then 
+`len(m)` is `n`; `len(m[k])` is at most `n` for any `k`; and `m.keys()`, `m.values()`, and `m.items()` yield at most `k` items
+before stopping. 
+
+## Goals
+
+* Python 2/3 support
+* Priority union and priority composition operators (`/` and `%`?) for rule-based linguistic applications
+* Methods for taking closure etc without calling on Pynini functions
+* Automagic handling of sigmas in rewrite rules
+* Support for more FST libraries?
