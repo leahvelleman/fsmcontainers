@@ -4,9 +4,9 @@ A Pythonic interface for finite state transducers.
 
 An FstMapping is a Python mapping -- a dictionary-like object -- backed by a finite state transducer. 
 
->>> m = FstMapping({"a": "b"})
->>> m["a"]
-"b"
+  >>> m = FstMapping({"a": "b"})
+  >>> m["a"]
+  "b"
 
 ## Reversible
 
