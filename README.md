@@ -10,7 +10,7 @@ An FstMapping is a Python mapping -- a dictionary-like object -- backed by a fin
 "b"
 ```
 
-## Reversible
+## Reversible, composable, concatenable, intersectable...
 
 Unlike regular dictionaries, they are reversible. The reverse can be accessed using the .inv property or the ~ operator.
 
@@ -50,8 +50,8 @@ True
 ```
 
 Sets can also be used as keys. `m[{a,b,...,z}]` is syntactic sugar for `set(m[a])+set(m[b])+...+set(m[z])`. This gives the 
-convenient property that any value in `m` can serve as a key for `~m` and vice versa, and it preserves the identities 
-that `(m*n)[a]` equals `n[m[a]]` and that `~m*m` maps every key to itself.
+convenient properties that any value in `m` can serve as a key for `~m` and that `~m*m` maps every value in `m.values()` to itself. 
+It also preserves the identity `(m*n)[a]==n[m[a]]`.
 
 ```python
 >>> m2[{"a", "b"}]
