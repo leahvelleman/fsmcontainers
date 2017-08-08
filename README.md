@@ -13,12 +13,12 @@ concatenated, composed, and so on.
 >>> m["a"]
 "b"
 >>> n = FstMapping({"b": "c"})
->>> l = m*n
->>> l["a"]
+>>> p = m * n
+>>> p["a"]
 "c"
->>> l = m+n
->>> l["ab"]
-"bc"
+>>> q = m + n + m + n
+>>> q["abab"]
+"bcbc"
 ```
 
 ## Construction
@@ -60,17 +60,17 @@ Other common FST operators are supported as well: `*` for composition, `+` for c
 
 ```python
 >>> n = FstMapping({"b": "c"})
->>> (m*n)["a"]
+>>> (m * n)["a"]
 "c"
->>> (m+n)["ab"]
+>>> (m + n)["ab"]
 "bc"
->>> (m|n)["a"]
+>>> (m | n)["a"]
 "b"
->>> (m|n)["b"]
+>>> (m | n)["b"]
 "c"
 ```
 
-Note that composition follows the convention that `(m*n)[k] == n[m[k]]` --- the *first* FstMapping given is the *innermost*. 
+Note that composition follows the convention that `(m * n)[k] == n[m[k]]` --- the *first* FstMapping given is the *innermost*. 
 This convention is used in other FST libraries (e.g. Pynini, XFST, foma), and makes sense if `m` and `n` are thought of as sound 
 changes, rewrite rules, or other transformations: `m*n` can be read in chronological order as "first apply `m`, then apply `n`." 
 But it differs from the math convention where `f ∘ g(x) == f(g(x))`, or the Haskell convention where `(f . g) x == f (g x)`,
@@ -86,14 +86,14 @@ Unlike regular dictionaries, FstMappings can be one-to-many. When a key is mappe
 True
 ```
 
-Sets can also be used as keys. `m[{a,b,...,z}]` is syntactic sugar for `set(m[a])+set(m[b])+...+set(m[z])`. This gives the 
-convenient properties that any value in `m` can serve as a key for `~m` and that `~m*m` maps every value in `m.values()` to itself. 
-It also preserves the identity `(m*n)[a]==n[m[a]]`.
+Sets can also be used as keys. `m[{a,b, ... ,z}]` is syntactic sugar for `set(m[a]) + set(m[b]) + ... + set(m[z])`. This gives the 
+convenient properties that any value in `m` can serve as a key for `~m` and that `~m * m` maps every value in `m.values()` to itself. 
+It also preserves the identity `(m * n)[a]==n[m[a]]`.
 
 ```python
 >>> m3[{"a", "b"}]
 "c"
->>> (~m3*m3)["c"]
+>>> (~m3 * m3)["c"]
 "c"
 ```
 
