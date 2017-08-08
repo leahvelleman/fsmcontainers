@@ -8,6 +8,10 @@ An FstMapping is a Python mapping -- a dictionary-like object -- backed by a fin
 >>> m = FstMapping({"a": "b"})
 >>> m["a"]
 "b"
+>>> import pynini
+>>> m2 = FstMapping(pynini.transducer("a", "b").closure())
+>>> m2["aaaaa"]
+"bbbbb"
 ```
 
 ## Reversible, composable, concatenable, intersectable...
@@ -44,8 +48,8 @@ Other common FST operators are supported as well: `*` for composition, `+` for c
 Unlike regular dictionaries, FstMappings can be one-to-many. When a key is mapped to many values, the values are returned as a set.
 
 ```python
->>> m2 = FstMapping({"a": "c", "b": "c"})
->>> (~m2)["c"] == {"a", "b"}
+>>> m3 = FstMapping({"a": "c", "b": "c"})
+>>> (~m3)["c"] == {"a", "b"}
 True
 ```
 
@@ -54,9 +58,9 @@ convenient properties that any value in `m` can serve as a key for `~m` and that
 It also preserves the identity `(m*n)[a]==n[m[a]]`.
 
 ```python
->>> m2[{"a", "b"}]
+>>> m3[{"a", "b"}]
 "c"
->>> (~m2*m2)["c"]
+>>> (~m3*m3)["c"]
 "c"
 ```
 
@@ -67,11 +71,10 @@ a (theoretically) infinite number of keys, or return a (theoretically) infinite 
 For instance, this transducer maps a string of `a`s of any length to a string of `b`s of equal length.
 
 ```python
->>> import pynini
->>> m3 = FstMapping(pynini.transducer("a", "b").closure())
->>> m3["aaaaa"]
+>>> m2 = FstMapping(pynini.transducer("a", "b").closure())
+>>> m2["aaaaa"]
 "bbbbb"
->>> m3["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
+>>> m2["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
 "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
