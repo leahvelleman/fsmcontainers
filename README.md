@@ -98,7 +98,7 @@ If `m` is cyclic on its key side, `len(m)`, `m.keys()`, `m.values()`, `m.items()
 side and maps `k` to an infinite number of values, then `m[k]` and `m.get(k)` also raise errors.
 
 A FstMapping created using the `limit` keyword argument shows a different behavior. If `m = FstMapping( ... , limit=n)` then 
-`len(m)` is `n`; `len(m[k])` is at most `n` for any `k`; and `m.keys()`, `m.values()`, and `m.items()` yield at most `k` items
+`len(m)` is `n`; `len(m[k])` is at most `n` for any `k`; and `m.keys()`, `m.values()`, and `m.items()` yield at most `n` items
 before stopping. 
 
 ## Goals
