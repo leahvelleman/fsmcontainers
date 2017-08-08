@@ -2,7 +2,7 @@
 
 A Pythonic interface for finite state transducers.
 
-An FstMapping is a Python mapping -- a dictionary-like object -- backed by a finite state transducer. 
+An FstMapping is a Python mapping -- an immutable dictionary-like object -- backed by a finite state transducer. 
 
 ```python
 >>> m = FstMapping({"a": "b"})
