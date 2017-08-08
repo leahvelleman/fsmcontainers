@@ -85,7 +85,7 @@ For instance, this transducer maps a string of `a`s of any length to a string of
 "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 ```
 
-If `m` is cyclic on its key side, `len(m)`, `m.keys()`, `m.values()` and `m.items()` raise errors. If `m` is cyclic on its value
+If `m` is cyclic on its key side, `len(m)`, `m.keys()`, `m.values()`, `m.items()`, and `for k in m` raise errors. If `m` is cyclic on its value
 side and maps `k` to an infinite number of values, then `m[k]` and `m.get(k)` also raise errors.
 
 A FstMapping created using the `limit` keyword argument shows a different behavior. If `m = FstMapping( ... , limit=n)` then 
