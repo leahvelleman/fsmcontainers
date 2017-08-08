@@ -8,6 +8,12 @@ An FstMapping is a Python mapping -- a dictionary-like object -- backed by a fin
 >>> m = FstMapping({"a": "b"})
 >>> m["a"]
 "b"
+```
+
+The library requires Pynini, and FstMappings can be constructed directly from Pynini transducers, as well as from dictionaries or any
+arguments that can be passed to the `dict()` constructor.
+
+```python
 >>> import pynini
 >>> m2 = FstMapping(pynini.transducer("a", "b").closure())
 >>> m2["aaaaa"]
