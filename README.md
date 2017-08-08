@@ -17,8 +17,8 @@ any combination of arguments that can be passed to the `dict()` constructor.
 ```python
 >>> import pynini
 >>> m2 = FstMapping(pynini.transducer("a", "b").closure())
->>> m2["a" * 10000]
-"bbb ... b"
+>>> m2["aaa"]
+"bbb"
 ```
 
 ## Reversible, composable, concatenable, intersectable...
@@ -90,8 +90,8 @@ For instance, this transducer maps a string of `a`s of any length to a string of
 >>> m2 = FstMapping(pynini.transducer("a", "b").closure())
 >>> m2["aaaaa"]
 "bbbbb"
->>> m2["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]
-"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+>>> m2["a" * 100000]
+"bbb ... b"
 ```
 
 If `m` is cyclic on its key side, `len(m)`, `m.keys()`, `m.values()`, `m.items()`, and `for k in m` raise errors. If `m` is cyclic on its value
