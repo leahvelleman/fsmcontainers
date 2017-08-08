@@ -50,6 +50,12 @@ Other common FST operators are supported as well: `*` for composition, `+` for c
 "c"
 ```
 
+Note that composition follows the convention that `(m*n)[k] == n[m[k]]` --- the *first* FstMapping given is the *innermost*. 
+This convention is used in other FST libraries (e.g. Pynini, XFST, foma), and makes sense if `m` and `n` are thought of as sound 
+changes, rewrite rules, or other transformations: `m*n` can be read in chronological order as "first apply `m`, then apply `n`." 
+But it differs from the math convention where `f ∘ g(x) == f(g(x))`, or the Haskell convention where `(f . g) x == f (g x)`,
+both readable as "first apply `g`, then apply `f`."
+
 ## One-to-many
 
 Unlike regular dictionaries, FstMappings can be one-to-many. When a key is mapped to many values, the values are returned as a set.
