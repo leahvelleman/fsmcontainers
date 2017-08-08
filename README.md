@@ -6,12 +6,14 @@ Requres [Pynini](http://www.openfst.org/twiki/bin/view/GRM/Pynini), which itself
 
 An FstMapping is an immutable Python mapping that has strings as its keys and values and is
 backed by a finite state transducer. Like regular FSTs, FstMappings can efficiently be inverted, 
-concatenated, composed, and so on.
+composed, concatenated, and so on.
 
 ```python
 >>> m = FstMapping({"a": "b"})
 >>> m["a"]
 "b"
+>>> m.inv["b"]
+"a"
 >>> n = FstMapping({"b": "c"})
 >>> p = m * n
 >>> p["a"]
