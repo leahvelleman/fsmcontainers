@@ -23,6 +23,12 @@ any combination of arguments that can be passed to the `dict()` constructor.
 >>> m2 = FstMapping(pynini.transducer("a", "b").closure())
 >>> m2["aaa"]
 "bbb"
+>>> m3 = FstMapping({"a": "c", "b": "c"})
+>>> m3["a"]
+"c"
+>>> m4 = FstMapping(a="c", b="d")
+>>> m3 == m4
+True
 ```
 
 ## Reversible, composable, concatenable, intersectable...
