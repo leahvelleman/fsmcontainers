@@ -12,8 +12,8 @@ class FstMapping(collections.Mapping):
     encodemapper = pynini.EncodeMapper("standard", True, True)
 
     def __init__(self, *args, **kwargs):
-        parent = kwargs['parent'] or None
-        max_iter = kwargs['max_iter'] or 10000
+        parent = kwargs['parent'] if 'parent' in kwargs else None
+        max_iter = kwargs['max_iter'] if 'max_iter' in kwargs else 10000
         self.max_iter = max_iter
         if parent is not None:
             self.fst = pynini.invert(parent.fst)
@@ -93,6 +93,8 @@ class FstMapping(collections.Mapping):
             raise TypeError
         if not form:
             raise KeyError
+        if len(form) == 1:
+            return form.pop()
         return form
 
     def __iter__(self):

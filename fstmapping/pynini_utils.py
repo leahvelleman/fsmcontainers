@@ -42,10 +42,10 @@ def apply_down(transducer, string, *args, **kwargs):
         string: A string to apply at the top side of `transducer`.
 
     Returns:
-        Set[str]: A set of strings that can be read off the bottom side of
+        A string or set of strings that can be read off the bottom side of
         `transducer` when applying `string` at the top side.
     """
-    return set(lower_words(a(string)*transducer), *args, **kwargs)
+    return set(lower_words(a(string)*transducer, *args, **kwargs))
 
 def apply_up(transducer, string, *args, **kwargs):
     """Mimics xfst/foma-style apply up.
@@ -55,14 +55,15 @@ def apply_up(transducer, string, *args, **kwargs):
         string: A string to apply at the bottom side of `transducer`.
 
     Returns:
-        Set[str]: A set of strings that can be read off the top side of
+        A string or set of strings that can be read off the top side of
         `transducer` when applying `string` at the bottom side.
     """
-    return set(upper_words(transducer*a(string)), *args, **kwargs)
+    return set(upper_words(transducer*a(string), *args, **kwargs))
 
 def words(transducer, side="top", limit=None):
     if side in ["top", "bottom"]:
-        encode = lambda t: t.copy().project(project_output=(side=="bottom"))
+        transducer = transducer.copy().project(project_output=(side=="bottom"))
+        encode = lambda t: t
         decode = lambda t: t
         cleanup = lambda top, bottom, weight: clean(top)
     elif side == "both":
