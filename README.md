@@ -73,10 +73,12 @@ It also preserves the identity `(m*n)[a]==n[m[a]]`.
 
 `len(m)` returns the number of individual (non-set) keys in `m`, and `m.keys()` returns an iterator over the individual
 (non-set) keys. This means that `len(m)` is equal to `len(m.keys())` but may not 
-be equal to `len(m.values())`, that `len(m)` and `len(~m)` may not be equal, and that there may exist sets `s` for which
-`m[s]` is well-defined even though `s not in m.keys()`. (There is some Pythonic precedent for the last behavior
-in Slice objects: if `l` is an ordinary Python list, there are Slice objects `s` for which `m[s]` is well-defined even though 
-`s not in m.keys()`.)
+be equal to `len(m.values())`, that `len(m)` and `len(~m)` may not be equal, and that if `s` is a set then
+`m[s]` is well-defined even though `s not in m.keys()`. 
+
+(There is some Pythonic precedent for the last behavior
+in slice objects: if `l` is an ordinary Python list and `s` is a slice, then `l[s]` is well-defined even though 
+`s not in range(len(l))`).
 
 ## Potentially infinite
 
