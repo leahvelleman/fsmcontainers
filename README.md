@@ -97,9 +97,10 @@ For instance, this transducer maps a string of `a`s of any length to a string of
 If `m` is cyclic on its key side, `len(m)`, `m.keys()`, `m.values()`, `m.items()`, and `for k in m` raise errors. If `m` is cyclic on its value
 side and maps `k` to an infinite number of values, then `m[k]` and `m.get(k)` also raise errors.
 
-A FstMapping created using the `limit` keyword argument shows a different behavior. If `m = FstMapping( ... , limit=n)` then 
+A FstMapping created using the `limit()` method shows a different behavior. If `m = FstMapping( ... ).limit(n)` then 
 `len(m)` is `n`; `len(m[k])` is at most `n` for any `k`; and `m.keys()`, `m.values()`, and `m.items()` yield at most `n` items
-before stopping. 
+before stopping. There is no guarantee that `m.keys()`, `m.values()`, and `m.items()` on a limited FstMapping will yield 
+*corresponding* keys and values: there may be some `k` in `m.keys()` such that `m[k]` is *not* in `m.values()`.
 
 ## Goals
 
