@@ -71,6 +71,9 @@ It also preserves the identity `(m*n)[a]==n[m[a]]`.
 "c"
 ```
 
+`len(m)` returns the number of individual (non-set) keys in `m`. This means that `len(m)` is equal to`len(m.keys())` but may not 
+be equal to `len(m.values())`, and that `len(m)` and `len(~m)` may not be equal. 
+
 ## Potentially infinite
 
 FstMappings can be based on a cyclic FST. This means that, unlike dictionaries, they can support mappings that take
