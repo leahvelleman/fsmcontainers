@@ -71,8 +71,12 @@ It also preserves the identity `(m*n)[a]==n[m[a]]`.
 "c"
 ```
 
-`len(m)` returns the number of individual (non-set) keys in `m`. This means that `len(m)` is equal to`len(m.keys())` but may not 
-be equal to `len(m.values())`, and that `len(m)` and `len(~m)` may not be equal. 
+`len(m)` returns the number of individual (non-set) keys in `m`, and `m.keys()` returns an iterator over the individual
+(non-set) keys. This means that `len(m)` is equal to `len(m.keys())` but may not 
+be equal to `len(m.values())`, that `len(m)` and `len(~m)` may not be equal, and that there may exist sets `s` for which
+`m[s]` is well-defined even though `s not in m.keys()`. (There is some Pythonic precedent for the last behavior
+in Slice objects: if `l` is an ordinary Python list, there are Slice objects `s` for which `m[s]` is well-defined even though 
+`s not in m.keys()`.)
 
 ## Potentially infinite
 
