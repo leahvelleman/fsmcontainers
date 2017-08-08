@@ -23,7 +23,9 @@ any combination of arguments that can be passed to the `dict()` constructor.
 
 ## Reversible, composable, concatenable, intersectable...
 
-Unlike regular dictionaries, they are reversible. The reverse can be accessed using the `.inv` property or the `~` operator.
+Unlike regular dictionaries, they are bidirectional. The inverse of a FstMapping can be accessed using
+the `.inv` property or the `~` operator (the same conventions used in
+[bidict](https://bidict.readthedocs.io/en/latest/basic-usage.html)).
 
 ```python
 >>> m.inv["b"]
