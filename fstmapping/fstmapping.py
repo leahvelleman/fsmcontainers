@@ -1,7 +1,7 @@
 # pylint: disable=fixme
 import collections
-import pywrapfst
 import pynini
+import pywrapfst
 import six
 from .pynini_utils import apply_down, apply_up, get_sigma,\
         upper_words, lower_words, m
@@ -11,7 +11,9 @@ class FstMapping(collections.Mapping):
 
     encodemapper = pynini.EncodeMapper("standard", True, True)
 
-    def __init__(self, *args, parent=None, max_iter=10000):
+    def __init__(self, *args, **kwargs):
+        parent = kwargs['parent'] or None
+        max_iter = kwargs['max_iter'] or 10000
         self.max_iter = max_iter
         if parent is not None:
             self.fst = pynini.invert(parent.fst)
@@ -60,6 +62,12 @@ class FstMapping(collections.Mapping):
 
     def __or__(self, other):
         return FstMapping(pynini.union(self.fst, other.fst))
+
+    def __mul__(self, other):
+        return FstMapping(pynini.compose(self.fst, other.fst))
+
+    def __add__(self, other):
+        return FstMapping(pynini.concat(self.fst, other.fst))
 
     def __getstate__(self):
         state = self.__dict__.copy()
