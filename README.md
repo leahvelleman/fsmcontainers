@@ -17,8 +17,8 @@ any combination of arguments that can be passed to the `dict()` constructor.
 ```python
 >>> import pynini
 >>> m2 = FstMapping(pynini.transducer("a", "b").closure())
->>> m2["aaaaa"]
-"bbbbb"
+>>> m2["a" * 10000]
+"bbb ... b"
 ```
 
 ## Reversible, composable, concatenable, intersectable...
