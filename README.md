@@ -85,6 +85,7 @@ before stopping.
 ## Goals
 
 * Python 2/3 support
+* FstSet class for infinite set support, so that `m[k]` can be well-defined even if `k*m` is cyclic on the output side
 * Priority union and priority composition operators (`/` and `%`?) for rule-based linguistic applications
 * Methods for taking closure etc without calling on Pynini functions
 * Automagic handling of sigmas in rewrite rules
