@@ -1,6 +1,6 @@
-# fstmapping
+# fsmcontainers
 
-A Pythonic container interface for finite state transducers.
+A Pythonic container interface for finite state machines.
 
 Requres [Pynini](http://www.openfst.org/twiki/bin/view/GRM/Pynini), which itself requires [OpenFst](http://openfst.org), [re2](http://github.com/google/re2), Python 2.7, and a C++ 11 compiler to build. 
 
