@@ -11,11 +11,12 @@ This package provides two classes:
 * `fsmdict`: A finite state transducer that you interact with like a (potentially infinite, reversible) mapping. Supports all `dict` methods and operators, plus inversion, composition, concatenation, and others.
 * `fsmset`: A finite state acceptor that you interact with like a (potentially infinite) set. Supports all `set` methods and operators, plus composition with `fsmdict`s. 
 
-These classes have very different time behavior than standard `dict` and `set`. Creation, 
+**These classes have very different time behavior than standard `dict` and `set`.** Creation, 
 mutation, and `len()` are not guaranteed to be fast. Composition may also not be fast. 
 Their advantage is that inversion and lookup remain very fast even after a long chain of transducers are composed together. This
-property is useful in natural language processing, among other places. (But if you don't need composition, and just need a fast 
-reversible mapping, you want [bidict](https://bidict.readthedocs.io/en/latest/basic-usage.html) instead.) 
+property is useful in natural language processing, among other places. 
+
+(But if you don't need composition and just want a fast reversible mapping, you want [bidict](https://bidict.readthedocs.io/en/latest/basic-usage.html) instead.) 
 
 Keys and values in an fsmdict, and items in an fsmset, must either be strings or have a converter provided which converts them to 
 and from strings. A converter for tuples of strings is included.
