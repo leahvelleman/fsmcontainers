@@ -102,11 +102,7 @@ def lower_words(transducer, *args, **kwargs):
 def get_sigma(stbl):
     """ Given a symbol table from an FST, convert it to a list of strings that
     can be fed to string_map. """
-    sigma_list = []
-    for _, symbol in pynini.SymbolTableIterator(stbl):
-        symbol = clean(symbol)
-        sigma_list.append((symbol, symbol))
-    return sigma_list
+    return [clean(pair[1]) for pair in stbl]
 
 def clean(string):
     """ Pynini often outputs bytestrings with unprintable characters
@@ -120,7 +116,7 @@ def from_att_symbol(string):
     # pylint: disable=too-many-return-statements
     if string.startswith("<0"):
         return six.unichr(int(string.strip('<>'), 16))
-    if string.startswith("<"):
+    if string.startswith("<") and string.endswith(">"):
         return {
             "NUL": chr(0),  "":    chr(0),  "epsilon": chr(0),
             "SOH": chr(1),  "STX": chr(2),  "ETX": chr(3),  "EOT": chr(4),
@@ -145,7 +141,8 @@ def from_att_symbol(string):
 
 def from_att_word(string):
     """ Decode a string of characters in OpenFST's output format. """
-    return "".join(from_att_symbol(token) for token in string.split())
+
+    return "".join(from_att_symbol(token) for token in string.split(' '))
 
 def find_nonfunctional(fst, strictness=100):
     """ Allauzen and Mohri: an FST f is functional (i.e. one-to-one or
@@ -161,4 +158,21 @@ def find_nonfunctional(fst, strictness=100):
                                        output_token_type="symbol"):
         if top != bottom:
             return (clean(top), clean(bottom))
+    return False
+
+def braces_balanced(string):
+    brace = False
+    for c in string:
+        if c == '[':
+            if brace:
+                return False
+            else:
+                brace = True
+        elif c == ']':
+            if not brace:
+                return False
+            else:
+                brace = False
+    if not brace:
+        return True
     return False
