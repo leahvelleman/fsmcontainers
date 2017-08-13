@@ -322,9 +322,6 @@ class FstSet(FstContainer):
         self.fst = m(((self.codec.encode(item),
                        self.codec.encode(item)) for item in as_set))
 
-    def __hash__(self):
-        return hash(self.fst.write_to_string() + str(self.codec).encode())
-
     @classmethod
     def lift(cls, obj):
         if isinstance(obj, FstSet):
@@ -342,6 +339,12 @@ class FstSet(FstContainer):
                                             output_token_type="symbol"))
             return self.codec.unpack(out)
         return self
+
+    def __hash__(self):
+        return hash(self.fst.write_to_string() + str(self.codec).encode())
+
+    __and__ = binary_op(pynini.intersect)
+    __rand__ = flip_binary(__and__)
 
     def __eq__(self, other):
         if self.kcodec != other.kcodec:
