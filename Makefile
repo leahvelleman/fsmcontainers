@@ -1,3 +1,3 @@
 test: 
-	python -m pytest --cov=fstmapping --cov-report html:cov_html tests.py
+	python -m pytest -v --cov=fsmcontainers --cov-report html:cov_html tests.py
 

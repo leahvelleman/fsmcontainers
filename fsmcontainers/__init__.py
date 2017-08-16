@@ -1,1 +1,1 @@
-from fstmapping.fstmapping import *
+from fsmcontainers.fsmcontainers import *

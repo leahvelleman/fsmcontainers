@@ -1,140 +1,130 @@
+# Goals:
+#   Consistent, pythonic interface
+#   Choice of backends
+#   Cache common expensive properties
+#   SHARE FSTs whenever possible to cut memory usage, don't copy or mutate FST
+#       when there's an alternative
+#   Be safe, avoid unexpected mutations.
+#   
+#
+#   Ways we need to interact with an FSM:
+#       Giving/getting core Python types -- basic API:
+#       - Encoding/decoding between unicode strings and its preferred
+#           representation
+#       - Marshalling/unmarshalling other objects to unicode strings
+#       - Constructing from lists of pairs of unmarshalled objects
+#       - Getting paths as lists of pairs of unmarshalled objects
+#       - __eq__
+#
+#      Giving/getting FSMContainers:
+#       - sigma
+#       - __or__, __plus__, __times__
+#
+#       Giving/getting views on an FSMContainer:
+#       - inv, best(n), all, draw(n)
+#
+#       Giving/getting core Python types using this API:
+#       - len() --- using paths()
+#       - isEmpty() --- using nshortest() and paths()
+#       - Checking membership (using compose() and isEmpty())
+#
+#       Plus for mappings:
+#       - Iterating over keys/values/k-v pairs (using paths())
+#       - __getitem__() --- using constructor, compose(), paths()
+#
+#       Plus for sets:
+#       - Intersection, XOR, minus
+
+
+
 # pylint: disable=fixme
 import functools
 import pynini
+from . import pynini_utils
 import pywrapfst
-from .codecs import *
-from .pynini_utils import clean, m
+from .serializers import *
 
-def binary_op(function, typecheck=None):
-    """ Wrap a Pynini two-argument constructive function as a binary
-    operation.
-    """
-    def innerfunction(self, other):
-        other = FstContainer.lift(other)
-        if typecheck == "product":
-            if self.vcodec != other.kcodec:
-                raise TypeError
-        else:
-            if self.kcodec != other.kcodec:
-                raise TypeError
-            if self.vcodec != other.vcodec:
-                raise TypeError
-        cls = type(self)
-        return cls(fst=function(self.fst, other.fst),
-                   kcodec=self.kcodec,
-                   vcodec=other.vcodec)
-    return innerfunction
-
-def flip_binary(function):
-    """ Given a binary operation, produce a right-handed version.
-    """
-    def innerfunction(self, other):
-        other = FstContainer.lift(other)
-        return function(other, self)
-    return innerfunction
-
-class FstContainer(object):
+class FsmContainer(object):
     """ Base class for container classes backed by FSTs.
 
     """
 
     def __init__(self, *args, **kwargs):
-
-        self.inv = None
-
-        if 'parent' in kwargs and isinstance(kwargs['parent'], FstContainer):
-            parent = kwargs['parent']
-            self.kcodec = parent.vcodec
-            self.vcodec = parent.kcodec
-            if self.kcodec == self.vcodec:
-                self.codec = self.kcodec
-            self.fst = pynini.invert(parent.fst)
-            self.inv = parent
-        elif 'fst' in kwargs and isinstance(kwargs['fst'], pynini.Fst):
-            self.kcodec = kwargs['kcodec']
-            self.vcodec = kwargs['vcodec']
-            if self.kcodec == self.vcodec:
-                self.codec = self.kcodec
-            self.fst = kwargs['fst']
-        else:
-            self.defaultconstructor(*args, **kwargs)
-
-    def defaultconstructor(self, *args, **kwargs):
-        """ Placeholder for a default constructor method.
-
-        The FstContainer object handles the following special cases, which are
-        mainly for internal use:
-
-            * Constructing an inverse FstContainer given a right-side-up one
-            * Constructing an FstContainer from a Pynini Fst and codecs
-
-        Subclasses must implement a defaultconstructor() method to handle
-        the general case. If the subclass is mimicking a container type,
-        its defaultconstructor() method should mimick the constructor for that
-        container.
-        """
-        raise NotImplemented
+        return NotImplemented
 
     @classmethod
-    def lift(cls, obj):
-        """ Attempt to convert obj to a singleton FstContainer containing obj.
+    def fromPairs(cls, pairs):
+        pairs = list(pairs)
+        self = cls.__new__(cls)
+        if len(pairs) == 0:
+            self.keySerializer = self.valueSerializer =\
+                    Serializer.from_prototype("")
+        else:
+            kproto, vproto = pairs[0]
+            self.keySerializer = Serializer.from_prototype(kproto)
+            self.valueSerializer = Serializer.from_prototype(vproto)
+        for pair in pairs:
+            pair = (pynini_utils.encode(self.keySerializer.serialize(pair[0])),
+                    pynini_utils.encode(self.keySerializer.serialize(pair[1])))
+        self.fst = pynini.string_map(pairs, 
+                                     input_token_type="utf8",
+                                     output_token_type="utf8")
+        return self
 
-        Most of the work is delegated to subclass lift methods. What
-        FstContainer.lift does is choose the right subclass lift method.
-        The subclass lift method then calls its own constructor, possibly
-        after wrapping the argument in some kind of container.
+    @classmethod
+    def fromFst(cls, fst, keySerializer=None, valueSerializer=None):
+        if not keySerializer:
+            keySerializer = Serializer.from_prototype("")
+        if not valueSerializer:
+            valueSerializer = Serializer.from_prototype("")
+        self = cls.__new__(cls)
+        self.fst = fst
+        self.keySerializer = keySerializer
+        self.valueSerializer = valueSerializer
+        return self
 
-        For instance:
-            * FstContainer.lift(  "a"  )
-                 == FstSet.lift(  "a"  )
-                      == FstSet( {"a"} )
+    # Class methods that subclasses can call on 
+    # to wrap Pynini fst operations
+    ###########################################
 
-            * FstContainer.lift(  ("a", "b")  )
-                 == FstSet.lift(  ("a", "b")  )
-                      == FstSet( {("a", "b")} )
-
-            * FstContainer.lift( {"a": "b"} )
-                == FstDict.lift( {"a": "b"} )
-                     == FstDict( {"a": "b"} )
-
-        The purpose of lift methods is to make duck typing for binary operators
-        more powerful. Given the definitions above and the definition of
-        __add__(),
-
-                   FstSet({"a"}) + {"b"}
-                == {"a"}         + FstSet({"b"})
-                == FstSet({"a"}) + FstSet({"b"}),
-
-                   FstDict({"a": "b"}) + {"c": "d"}
-                == {"a": "b"}          + FstDict({"c": "d"})
-                == FstDict({"a": "b"}) + FstDict({"c": "d"}),
-
-        and
-
-                   FstSet({"a"}) + FstDict({"b": "c"})
-                == {"a"}         + FstDict({"b": "c"})
-                == FstSet({"a"}) + {"b": "c"}.
+    @classmethod
+    def binary_op(cls, function):
+        """ Wrap a Pynini two-argument constructive function as a binary
+        operation.
         """
+        def innerfunction(self, other):
+            targetcls = type(self)
+            if not type(other) == type(self):
+                raise TypeError
+            if self.keySerializer != other.keySerializer:
+                raise ValueError
+            if self.valueSerializer != other.valueSerializer:
+                raise ValueError
+            return targetcls.fromFst(fst=function(self.fst, other.fst),
+                                     keySerializer=self.keySerializer,
+                                     valueSerializer=other.valueSerializer)
+        return innerfunction
 
-        if isinstance(obj, cls):
-            return obj
-        if isinstance(obj, set):
-            return FstSet(obj)
-        return FstSet.lift(obj)
-        # Eventually, we will extend this with repeated try/fail for all
-        # subclasses.
-
-    def lower(self):
-        """ Lower is the inverse of lift. Unlike lift, it will always be
-        called on an FstContainer instance, so there is nothing for the base
-        class to do. Subclass lower methods should be written so that
-        for any x, FstContainer.lift(x).lower() == x (if it doesn't raise an
-        error).
+    @classmethod
+    def product_op(cls, function):
+        """ Wrap a Pynini two-argument constructive function as a binary
+        operation.
         """
-        raise NotImplemented
+        def innerfunction(self, other):
+            if not isinstance(other, FsmContainer):
+                raise TypeError
+            if self.valueSerializer != other.keySerializer:
+                raise ValueError
+            return FsmMap.fromFst(fst=function(self.fst, other.fst),
+                                  keySerializer=self.keySerializer,
+                                  valueSerializer=other.valueSerializer)
+        return innerfunction
 
-    def singleton(self):
-        """ Return True if the FstContainer has exactly one path.
+    # Properties that are available for any FsmContainer
+    ####################################################
+
+    def isScalar(self):
+        """ Return True if the FsmContainer has exactly one path.
         """
         twoshortest = [p for p in
                        pynini.shortestpath(self.fst, nshortest=2).paths()]
@@ -143,212 +133,263 @@ class FstContainer(object):
         return False
 
     def __hash__(self):
-        return hash(self.fst.write_to_string())
+        return hash(self.fst.write_to_string() + 
+                    str(self.keySerializer).encode() +
+                    str(self.valueSerializer).encode())
 
-    @functools.lru_cache(maxsize=1)
+    # TODO cache
+    @property
     def sigma(self):
-        """ Assemble set of output (value-side) symbols.
+        """ Assemble set of symbols.
 
-        If c is an FstContainer, c.sigma is an FstSet containing each of the
-        symbols that appear in values in c. c.sigma can be used as an acceptor
-        matching a single character.
+        If c is an FsmContainer, c.sigma is an FsmSet containing each of the
+        symbols that appear in keys or values in c. c.sigma can be used as an
+        acceptor matching a single character.
         """
-        symbols = [clean(pair[1]) for pair in self.fst.output_symbols()]
-        return FstSet(symbols)
+        sigma = set()
+        isyms = self.fst.input_symbols()
+        osyms = self.fst.output_symbols()
+        for state in self.fst.states():
+            for arc in self.fst.arcs(state):
+                sigma |= {pynini_utils.decode(isyms.find(arc.ilabel))}
+                sigma |= {pynini_utils.decode(osyms.find(arc.olabel))}
+                print(sigma)
+        return FsmSet(sigma)
 
-    @functools.lru_cache(maxsize=1)
+
+    @property
     def sigma_star(self):
-        """ Assemble infinite set of combinations of output symbols.
-
-        If c is an FstContainer, c.sigma_star is a cyclic (infinite) FstSet
-        containing any combination of symbols that appear in values in c.
-        c.sigma_star can be used as an acceptor matching a string of any
-        length.
+        """ Assemble infinite set of combinations of symbols.
         """
 
-        return self.sigma().closure()
+        return self.sigma.closure()
 
     def __len__(self):
-        raise TypeError
-
-    def __bool__(self):
         try:
-            next(self.fst.paths())
+            a = self.fst.paths()
         except pywrapfst.FstArgError:
-            return True #FST is cyclic but has successful paths
-        except StopIteration:
-            return False #FST has no successful paths
-        return True #FST is acyclic and has successful paths
+            return float('inf')
+        return len(list(a))
 
-    def __iter__(self, limit=None):
-        return self.kpaths(limit=limit)
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            raise TypeError
+        if self.keySerializer != other.keySerializer:
+            raise ValueError
+        if self.valueSerializer != other.valueSerializer:
+            raise ValueError
+        em = pynini.EncodeMapper("standard", True, True)
+        return pynini.equivalent(pynini.encode(self.fst, em).optimize(), 
+                                 pynini.encode(other.fst, em).optimize())
 
     def __contains__(self, key):
-        key = FstSet.lift(key)
-        if key.kcodec != self.kcodec:
+        key = FsmSet({key})
+        if key.keySerializer != self.keySerializer:
             raise TypeError
         fst = pynini.compose(key.fst, self.fst)
         return True
 
-    __add__ = binary_op(pynini.concat)
-    __radd__ = flip_binary(__add__)
-    __or__ = binary_op(pynini.union)
-    __ror__ = flip_binary(__or__)
-    __mul__ = binary_op(pynini.compose, typecheck="product")
-    __rmul__ = flip_binary(__mul__)
+    # Operations that return a new FsmContainer
+    ###########################################
 
-    def kpaths(self, limit=None):
-        """ Attempt to return an iterator over keys in this FstContainer.
+    def closure(self):
+        """ Return a FsmContainer containing the closure of items in this one.
+        """
+        cls = type(self)
+        return cls.fromFst(fst=pynini.closure(self.fst),
+                           keySerializer=self.keySerializer,
+                           valueSerializer=self.valueSerializer)
 
-        If an FstContainer is cyclic (infinite), a limit must be specified,
+    def project(self, side="key"):
+        if side not in {"key", "value"}:
+            raise ValueError
+
+        project_output = (side == "value")
+
+        if side == "key":
+            codec = self.keySerializer
+        else:
+            codec = self.valueSerializer
+
+        return FsmSet.fromFst(
+                fst=self.fst.copy().project(project_output=project_output), 
+                keySerializer=codec, 
+                valueSerializer=codec)
+
+    # Iterator methods
+    ##################
+
+
+    def paths(self, limit=None, side=None):
+        """ Attempt to return an iterator over keys in this FsmContainer.
+
+        If an FsmContainer is cyclic (infinite), a limit must be specified,
         since Pynini refuses to construct infinite iterators.
 
         TODO: find a workaround for this.
         """
 
-        fst = self.fst.copy().project(project_output=False)
         if limit is None:
             try:
-                stringpaths = fst.paths(
+                stringpaths = self.fst.paths(
                     input_token_type='symbol',
                     output_token_type='symbol')
             except pywrapfst.FstArgError:
                 raise ValueError(
                     "Unlimited iteration over cyclic (i.e. infinite)"
-                    "FstContainers is not supported. Specify a positive"
+                    "FsmContainers is not supported. Specify a positive"
                     "integer as a value for limit.")
         else:
-            stringpaths = pynini.shortestpath(fst, nshortest=limit).paths(
+            stringpaths = pynini.shortestpath(self.fst, nshortest=limit).paths(
                 input_token_type='symbol',
                 output_token_type='symbol')
-        for stringpath in stringpaths:
-            yield self.kcodec.unpack(stringpath[0])
+        if side=="key":
+            for stringpath in stringpaths:
+                yield self.keySerializer.inflate(
+                        pynini_utils.decode(stringpath[0]))
+        elif side=="value":
+            for stringpath in stringpaths:
+                yield self.keySerializer.inflate(
+                        pynini_utils.decode(stringpath[1]))
+        else:
+            for stringpath in stringpaths:
+                yield (self.keySerializer.inflate(
+                            pynini_utils.decode(stringpath[0])),
+                       self.keySerializer.inflate(
+                            pynini_utils.decode(stringpath[1])))
 
-    def closure(self):
-        """ Return a FstContainer containing the closure of items in this one.
-        """
-        cls = type(self)
-        return cls(fst=pynini.closure(self.fst),
-                   kcodec=self.kcodec,
-                   vcodec=self.vcodec)
 
-#class FstDict(FstContainer):
-#    """ An ordinary one-way mapping backed by an Fst.
-#
-#    The FstDict() constructor accepts any combination of arguments accepted by
-#    the dict() constructor. It checks the types of these arguments against the
-#    available codecs and selects the appropriate one if possible.
-#
-#    Alternatively, FstDict() can be called with a Pynini Fst assigned to the
-#    keyword argument `fst`, and (optionally) FstCodec objects assigned to
-#    `codec`,
-#    `kcodec`, or `vcodec`. If an Fst is specified, any codec left unspecified
-#    is
-#    taken to be NullCodec(), which leaves input and output strings unchanged.
-#
-#    """
-#
-#    def defaultconstructor(self, *args, **kwargs):
-#        d = dict(*args, **kwargs)
-#        if len(d) == 0:
-#            raise ValueError
-#        prototype_key = next(iter(d))
-#        prototype_value = d[prototype_key]
-#        self.kcodec = FstContainer.codec_from_prototype(prototype_key)
-#        self.vcodec = FstContainer.codec_from_prototype(prototype_value)
-#        self.fst = m((self.kcodec.encode(k), self.vcodec.encode(v))
-#                     for k, v in d.items())
-#        self.inv = None
-#
-#    def __mul__(self, other):
-#        other = FstSet.lift(other)
-#        if self.vcodec != other.kcodec:
-#            raise TypeError
-#        cls = type(self)
-#        return cls(fst=pynini.compose(self.fst, other.fst),
-#                   kcodec=self.kcodec,
-#                   vcodec=other.vcodec)
-#
-#    def __getitem__(self, key):
-#        key = FstSet.lift(key)
-#        form = (key*self.fst).project(project_output=True)
-#        if not form:
-#            raise KeyError
-#        return FstSet.lower(form)
-#
-#    # TODO: memoize, make sure we're giving out COPIES of the iterator so
-#    # we don't give out a half-eaten one by mistake
-#    def keys(self, limit=None):
-#        for w in upper_words(self.fst, limit=limit):
-#            yield self.kcodec.decode(w)
-#
-#    def values(self, limit=None):
-#        for w in lower_words(self.fst, limit=limit):
-#            yield self.vcodec.decode(w)
-#
-#    # These are defined in terms of methods that have already had their
-#    # encodeers and decoders applied, so they don't need to call encode()
-#    # and decode() themselves themselves:
-#
-#    def __iter__(self):
-#        for word in self.keys():
-#            yield word, self[word]
-#
-#    def items(self):
-#        return self.__iter__
-#
-#
-#class FstBidict(FstDict):
-#
-#    def __init__(self, *args, **kwargs):
-#        super().__init__(*args, **kwargs)
-#        if self.inv is None:
-#            cls = type(self)
-#            self.inv = cls(parent=self)
-#
-#    def __invert__(self):
-#        return self.inv
+@functools.total_ordering
+class FsmSet(FsmContainer):
 
-class FstSet(FstContainer):
+    # Constructors
+    ##############
 
-    def defaultconstructor(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], FsmSet):
+            return args[0].copy()
         as_set = set(*args, **kwargs)
-        try:
-            prototype_item = next(iter(as_set))
-        except StopIteration:
-            prototype_item = ''
-        self.codec = self.kcodec = self.vcodec =\
-                FstCodec.from_prototype(prototype_item)
-        self.fst = m(((self.codec.encode(item),
-                       self.codec.encode(item)) for item in as_set))
+        a = FsmSet.fromPairs((i, i) for i in as_set)
+        self.fst = a.fst
+        self.keySerializer = a.keySerializer
+        self.valueSerializer = a.valueSerializer
 
-    @classmethod
-    def lift(cls, obj):
-        if isinstance(obj, FstSet):
-            return obj
-        if isinstance(obj, set):
-            return FstSet(obj)
-        if isinstance(obj, str):
-            return FstSet({obj})
-        if isinstance(obj, tuple):
-            return FstSet({obj})
 
-    def lower(self):
-        if self.singleton():
+    # Accessors and iterators
+    #########################
+
+    def unwrap(self):
+        if self.isScalar():
             out, _, _ = next(self.fst.paths(input_token_type="symbol",
                                             output_token_type="symbol"))
-            return self.codec.unpack(out)
-        return self
+            return self.keySerializer.unpack(out)
+        else:
+            raise ValueError("Cannot unwrap a set that contains more than"
+                             "one item.")
 
-    def __hash__(self):
-        return hash(self.fst.write_to_string() + str(self.codec).encode())
+    def draw(self, n=1):
+        return pynini.randgen(self.fst, npath)
 
-    __and__ = binary_op(pynini.intersect)
-    __rand__ = flip_binary(__and__)
+    def __iter__(self, limit=None):
+        return self.paths(limit=limit, side="key")
 
-    def __eq__(self, other):
-        if self.kcodec != other.kcodec:
+    def __repr__(self):
+        exampleItems = list(self.paths(limit=4, side="key"))
+        exampleString = ", ".join("'%s'" % i for i in
+                sorted(exampleItems)[0:3])
+        if len(exampleItems) > 3:
+            return "FsmSet({%s, ... })" % exampleString
+        return "FsmSet({%s})" % exampleString
+
+    # Binary ops
+    ############
+
+    __add__ = FsmContainer.binary_op(pynini.concat)
+    __and__ = FsmContainer.binary_op(pynini.intersect)
+    __or__  = FsmContainer.binary_op(pynini.union)
+    __sub__ = FsmContainer.binary_op(pynini.difference)
+    __xor__ = FsmContainer.binary_op(
+                lambda self, other: (self | other) - (self & other))
+    __mul__ = FsmContainer.product_op(pynini.compose)
+    if six.PY3:
+        __matmul__ = FsmContainer.product_op(pynini.leniently_compose)
+
+
+    def __ge__(self, other):
+        if not isinstance(other, FsmSet):
             raise TypeError
-        if self.vcodec != other.vcodec:
-            raise TypeError
-        return pynini.equivalent(self.fst.optimize(), other.fst.optimize())
+        if self.keySerializer != other.keySerializer:
+            raise ValueError
+        if (self - other) and not (other - self):
+            return True
+        return False
+
+    # @functools.total_ordering takes care of other comparison operators after
+    # we've specified these two.
+
+
+
+class FsmMap(FsmContainer):
+
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], FsmSet):
+            return args[0].copy()
+        as_dict = dict(*args, **kwargs)
+        a = FsmMap.fromPairs(as_dict.items())
+        self.fst = a.fst
+        self.keySerializer = a.keySerializer
+        self.valueSerializer = a.valueSerializer
+
+    @property
+    def inv(self):
+        return self.__invert__()
+
+    def __invert__(self):
+        return type(self).fromFst(fst=pynini.invert(self.fst),
+                                  keySerializer=self.valueSerializer,
+                                  valueSerializer=self.keySerializer)
+
+    def __getitem__(self, key):
+        if isinstance(key, six.string_types):
+            key = FsmSet({key})
+        elif isinstance(key, set):
+            key = FsmSet(key)
+
+        if not self.keySerializer == key.valueSerializer:
+            raise ValueError
+
+        form = (key * self).project(side="value")
+
+        if not form:
+            raise KeyError
+        return form
+
+    def __iter__(self, limit=None):
+        return self.paths(limit=limit, side="key")
+
+    keys = __iter__
+
+    def values(self, limit=None):
+        return self.paths(limit=limit, side="value")
+
+    def items(self, limit=None):
+        return self.paths(limit=limit, side="both")
+
+    def __repr__(self):
+        exampleItems = list(self.paths(limit=4, side="both"))
+        exampleString = ", ".join("'%s': '%s'" % (k,v) for k,v in
+                sorted(exampleItems)[0:3])
+        if len(exampleItems) > 3:
+            exampleString += " ... "
+        return "FsmMap({%s})" % exampleString
+
+    # Binary ops
+    ############
+
+    __add__ = FsmContainer.binary_op(pynini.concat)
+    __or__  = FsmContainer.binary_op(pynini.union)
+    __mul__ = FsmContainer.product_op(pynini.compose)
+    if six.PY3:
+        __matmul__ = FsmContainer.product_op(pynini.leniently_compose)
+
+
