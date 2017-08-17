@@ -100,9 +100,10 @@ class FsmContainer(object):
                 raise ValueError
             if self.valueSerializer != other.valueSerializer:
                 raise ValueError
-            return targetcls.fromFst(fst=function(self.fst, other.fst),
-                                     keySerializer=self.keySerializer,
-                                     valueSerializer=other.valueSerializer)
+            return targetcls.fromFst(
+                    fst=function(self.fst, other.fst).optimize(),
+                    keySerializer=self.keySerializer,
+                    valueSerializer=other.valueSerializer)
         return innerfunction
 
     @classmethod
@@ -115,7 +116,7 @@ class FsmContainer(object):
                 raise TypeError
             if self.valueSerializer != other.keySerializer:
                 raise ValueError
-            return FsmMap.fromFst(fst=function(self.fst, other.fst),
+            return FsmMap.fromFst(fst=function(self.fst, other.fst).optimize(),
                                   keySerializer=self.keySerializer,
                                   valueSerializer=other.valueSerializer)
         return innerfunction
@@ -171,6 +172,15 @@ class FsmContainer(object):
             return float('inf')
         return len(list(a))
 
+    def isEmpty(self):
+        try:
+            next(self.fst.paths())
+        except StopIteration:
+            return True
+        except pywrapfst.FstArgError:
+            return False
+        return False
+
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             raise TypeError
@@ -186,7 +196,9 @@ class FsmContainer(object):
         key = FsmSet({key})
         if key.keySerializer != self.keySerializer:
             raise TypeError
-        fst = pynini.compose(key.fst, self.fst)
+        product = key * self
+        if product.isEmpty():
+            return False
         return True
 
     # Operations that return a new FsmContainer
@@ -215,6 +227,13 @@ class FsmContainer(object):
                 fst=self.fst.copy().project(project_output=project_output), 
                 keySerializer=codec, 
                 valueSerializer=codec)
+
+    def copy(self):
+        cls = type(self)
+        out = cls.__new__(cls)
+        for k, v in self.__dict__.items():
+            setattr(out, k, v)
+        return out
 
     # Iterator methods
     ##################
@@ -332,10 +351,12 @@ class FsmSet(FsmContainer):
 class FsmMap(FsmContainer):
 
     def __init__(self, *args, **kwargs):
-        if len(args) == 1 and isinstance(args[0], FsmSet):
-            return args[0].copy()
-        as_dict = dict(*args, **kwargs)
-        a = FsmMap.fromPairs(as_dict.items())
+        if len(args) == 1:
+            if isinstance(args[0], dict):
+                pairs = list(args[0].items())
+            pairs = list(args[0])
+        pairs += list(kwargs.items())
+        a = FsmMap.fromPairs(pairs)
         self.fst = a.fst
         self.keySerializer = a.keySerializer
         self.valueSerializer = a.valueSerializer
@@ -352,17 +373,26 @@ class FsmMap(FsmContainer):
     def __getitem__(self, key):
         if isinstance(key, six.string_types):
             key = FsmSet({key})
-        elif isinstance(key, set):
+        elif not isinstance(key, FsmSet):
             key = FsmSet(key)
+
+        try:
+            limit = getattr(self, "limit")
+        except AttributeError:
+            limit = 1
 
         if not self.keySerializer == key.valueSerializer:
             raise ValueError
 
-        form = (key * self).project(side="value")
-
-        if not form:
+        try:
+            form = (key * self).paths(limit=limit, side="value")
+        except StopIteration:
             raise KeyError
-        return form
+
+        if limit == 1:
+            return next(form)
+        else:
+            return FsmSet(form)
 
     def __iter__(self, limit=None):
         return self.paths(limit=limit, side="key")
@@ -374,6 +404,17 @@ class FsmMap(FsmContainer):
 
     def items(self, limit=None):
         return self.paths(limit=limit, side="both")
+
+    @property
+    def all(self):
+        out = self.copy()
+        out.limit = None
+        return out
+
+    def only(self, n):
+        out = self.copy()
+        out.limit = n
+        return out
 
     def __repr__(self):
         exampleItems = list(self.paths(limit=4, side="both"))

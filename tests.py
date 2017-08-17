@@ -3,6 +3,7 @@ import pytest
 import six
 from hypothesis import given, assume, reject
 from hypothesis.strategies import *
+from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 from fsmcontainers import *
 
 @composite
@@ -101,11 +102,12 @@ def test_sets_are_truthy_iff_nonempty(obj):
         a = FsmSet(obj)
     except ValueError:
         reject()
-    assert bool(a) == (len(obj)>0)
+    assert bool(a) == (len(obj) > 0)
 
 # TODO:
 #   FstSet({1:2}) == FstSet({1})?
 #   Are there other set constructor possibilities we're overlooking?
+
 
 @given(dictionaries(text(), text()))
 def test_double_inversion_is_noop(d):
@@ -142,6 +144,42 @@ def test_concatenation_is_distributive(d1, d2, cf):
     bkey = cf([k for k in b.keys()])
     assert apb[akey+bkey] == a[akey]+b[bkey]
 
+class FsmSets(RuleBasedStateMachine):
+    fsmsets = Bundle('FsmSet')
+
+    @rule(target=fsmsets, x=text())
+    def acceptor(self, x):
+        try:
+            return FsmSet({x})
+        except ValueError:
+            reject()
+
+    @rule(target=fsmsets, x=fsmsets, y=fsmsets)
+    def union(self, x, y):
+        return x|y
+
+    @rule(target=fsmsets, x=fsmsets, y=fsmsets)
+    def intersection(self, x, y):
+        return x&y
+
+    @rule(target=fsmsets, x=fsmsets, y=fsmsets)
+    def concatenation(self, x, y):
+        return x+y
+
+    @rule(target=fsmsets, x=fsmsets, y=fsmsets)
+    def subtraction(self, x, y):
+        return x-y
+
+    @rule(target=fsmsets, x=fsmsets)
+    def closure(self, x):
+        return x.closure()
+
+    @rule(x=fsmsets, y=fsmsets)
+    def test_intersections_are_subsets(self, x, y):
+        assert x&y <= x
+
+
+TestSets = FsmSets.TestCase
 
 def normalize_equal(a, b):
     if isinstance(a, str) and isinstance(b, str):
