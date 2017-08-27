@@ -2,8 +2,18 @@ import six
 from . import pynini_utils
 
 class Serializer(object):
-    # Separate out two jobs: (a) base class for serializers; (b) singleton
-    # serializer factory.
+    """ This class does two jobs: It is a lightweight base class for
+    serializers, and its fromPrototype class method takes an object and
+    returns the correct serializer for that object. Getting serializers
+    via Serializer.fromPrototype guarantees that only one serializer for each
+    protocol exists, meaning that we can check that FSMs were serialized
+    according to the same protocol by comparing their serializers. 
+    
+    (We can't just enforce this by making serializer classes singletons,
+    because there can be two different protocols implemented by the same
+    serializer class.  For instance, 'pairs of strings' and 'triples of
+    strings' need different serializers, but both of their serializers will
+    belong to the class TupleSerializer.)"""
 
     serializers = {}
 

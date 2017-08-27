@@ -1,3 +1,23 @@
+"""
+Automatically construct class members? Or find a way to make sure my stateful
+tests are tracking the class as it gets changed, including all operations etc?
+
+To test:
+    - Object-returning methods give an object of the right type.
+        (__getitem__, keys, values, items, paths)
+    - Containers that hash equal have the same properties.
+    - Set total ordering is transitive, antireflexive, WHAT ELSE?
+    - m[{a,b}] == m[a] | m[b]
+    - m[∅] is KeyError
+    - {item for item in FsmSet(*args, **kwargs)} == set(*args, **kwargs)
+    - {k:v for k,v in FsmDict(*args, **kwargs).items()} == dict(*args, **kwargs)
+    - With the exception of subscripting with a set, if S is an FsmSet and s is
+      a regular set then S.method(*args, **kwargs) == s.method(*args, **kwargs)
+    - Same for D and d
+    - a * (b+c) == (a*b) + (a*c)
+    - a & (b|c) == (a&b) | (a&c)
+"""
+
 import unicodedata
 import pytest
 import six
@@ -5,6 +25,7 @@ from hypothesis import given, assume, reject
 from hypothesis.strategies import *
 from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 from fsmcontainers import *
+from fsmcontainers.fsmcontainers.serializers import Serializer, braces_balanced
 
 @composite
 def texttuples(draw, n=None):
@@ -71,14 +92,6 @@ def test_unsupported_prototype_error(obj):
     with pytest.raises(TypeError):
         Serializer.from_prototype(obj)
 
-@given(text())
-def test_can_create_a_set_from_an_acceptor(obj):
-    a = pynini.acceptor(obj, token_type="utf8")
-    fs = FsmSet.fromFst(fst=a,
-                        keySerializer=Serializer.from_prototype(obj),
-                        valueSerializer=Serializer.from_prototype(obj))
-    assert isinstance(fs, FsmSet)
-
 @given(packable())
 def test_can_create_a_set(obj):
     assume(all(not "\0" in o for o in obj))
@@ -86,6 +99,14 @@ def test_can_create_a_set(obj):
         fs = FsmSet(obj)
     except ValueError:
         reject()
+    assert isinstance(fs, FsmSet)
+
+@given(text())
+def test_can_create_a_set_from_an_acceptor(obj):
+    a = pynini.acceptor(obj, token_type="utf8")
+    fs = FsmSet.fromFst(fst=a,
+                        keySerializer=Serializer.from_prototype(obj),
+                        valueSerializer=Serializer.from_prototype(obj))
     assert isinstance(fs, FsmSet)
 
 @given(text())
@@ -144,42 +165,6 @@ def test_concatenation_is_distributive(d1, d2, cf):
     bkey = cf([k for k in b.keys()])
     assert apb[akey+bkey] == a[akey]+b[bkey]
 
-class FsmSets(RuleBasedStateMachine):
-    fsmsets = Bundle('FsmSet')
-
-    @rule(target=fsmsets, x=text())
-    def acceptor(self, x):
-        try:
-            return FsmSet({x})
-        except ValueError:
-            reject()
-
-    @rule(target=fsmsets, x=fsmsets, y=fsmsets)
-    def union(self, x, y):
-        return x|y
-
-    @rule(target=fsmsets, x=fsmsets, y=fsmsets)
-    def intersection(self, x, y):
-        return x&y
-
-    @rule(target=fsmsets, x=fsmsets, y=fsmsets)
-    def concatenation(self, x, y):
-        return x+y
-
-    @rule(target=fsmsets, x=fsmsets, y=fsmsets)
-    def subtraction(self, x, y):
-        return x-y
-
-    @rule(target=fsmsets, x=fsmsets)
-    def closure(self, x):
-        return x.closure()
-
-    @rule(x=fsmsets, y=fsmsets)
-    def test_intersections_are_subsets(self, x, y):
-        assert x&y <= x
-
-
-TestSets = FsmSets.TestCase
 
 def normalize_equal(a, b):
     if isinstance(a, str) and isinstance(b, str):

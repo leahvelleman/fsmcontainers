@@ -5,165 +5,18 @@
 #   SHARE FSTs whenever possible to cut memory usage, don't copy or mutate FST
 #       when there's an alternative
 #   Be safe, avoid unexpected mutations.
-#   
-#
-#   Ways we need to interact with an FSM:
-#       Giving/getting core Python types -- basic API:
-#       - Encoding/decoding between unicode strings and its preferred
-#           representation
-#       - Marshalling/unmarshalling other objects to unicode strings
-#       - Constructing from lists of pairs of unmarshalled objects
-#       - Getting paths as lists of pairs of unmarshalled objects
-#       - __eq__
-#
-#      Giving/getting FSMContainers:
-#       - sigma
-#       - __or__, __plus__, __times__
-#
-#       Giving/getting views on an FSMContainer:
-#       - inv, best(n), all, draw(n)
-#
-#       Giving/getting core Python types using this API:
-#       - len() --- using paths()
-#       - isEmpty() --- using nshortest() and paths()
-#       - Checking membership (using compose() and isEmpty())
-#
-#       Plus for mappings:
-#       - Iterating over keys/values/k-v pairs (using paths())
-#       - __getitem__() --- using constructor, compose(), paths()
-#
-#       Plus for sets:
-#       - Intersection, XOR, minus
 
-
-
-# pylint: disable=fixme
 import functools
+import operator
+import six
 import pynini
-from . import pynini_utils
+from .pynini_utils import PyniniWrapper
 import pywrapfst
-from .serializers import *
 
-class FsmContainer(object):
-    """ Base class for container classes backed by FSTs.
-
+class FsmContainer(PyniniWrapper):
+    """ A base class providing magic methods, and higher-order functions for
+    creating magic methods, that are shared by FsmMap and FsmSet.
     """
-
-    def __init__(self, *args, **kwargs):
-        return NotImplemented
-
-    @classmethod
-    def fromPairs(cls, pairs):
-        pairs = list(pairs)
-        self = cls.__new__(cls)
-        if len(pairs) == 0:
-            self.keySerializer = self.valueSerializer =\
-                    Serializer.from_prototype("")
-        else:
-            kproto, vproto = pairs[0]
-            self.keySerializer = Serializer.from_prototype(kproto)
-            self.valueSerializer = Serializer.from_prototype(vproto)
-        for pair in pairs:
-            pair = (pynini_utils.encode(self.keySerializer.serialize(pair[0])),
-                    pynini_utils.encode(self.keySerializer.serialize(pair[1])))
-        self.fst = pynini.string_map(pairs, 
-                                     input_token_type="utf8",
-                                     output_token_type="utf8")
-        return self
-
-    @classmethod
-    def fromFst(cls, fst, keySerializer=None, valueSerializer=None):
-        if not keySerializer:
-            keySerializer = Serializer.from_prototype("")
-        if not valueSerializer:
-            valueSerializer = Serializer.from_prototype("")
-        self = cls.__new__(cls)
-        self.fst = fst
-        self.keySerializer = keySerializer
-        self.valueSerializer = valueSerializer
-        return self
-
-    # Class methods that subclasses can call on 
-    # to wrap Pynini fst operations
-    ###########################################
-
-    @classmethod
-    def binary_op(cls, function):
-        """ Wrap a Pynini two-argument constructive function as a binary
-        operation.
-        """
-        def innerfunction(self, other):
-            targetcls = type(self)
-            if not type(other) == type(self):
-                raise TypeError
-            if self.keySerializer != other.keySerializer:
-                raise ValueError
-            if self.valueSerializer != other.valueSerializer:
-                raise ValueError
-            return targetcls.fromFst(
-                    fst=function(self.fst, other.fst).optimize(),
-                    keySerializer=self.keySerializer,
-                    valueSerializer=other.valueSerializer)
-        return innerfunction
-
-    @classmethod
-    def product_op(cls, function):
-        """ Wrap a Pynini two-argument constructive function as a binary
-        operation.
-        """
-        def innerfunction(self, other):
-            if not isinstance(other, FsmContainer):
-                raise TypeError
-            if self.valueSerializer != other.keySerializer:
-                raise ValueError
-            return FsmMap.fromFst(fst=function(self.fst, other.fst).optimize(),
-                                  keySerializer=self.keySerializer,
-                                  valueSerializer=other.valueSerializer)
-        return innerfunction
-
-    # Properties that are available for any FsmContainer
-    ####################################################
-
-    def isScalar(self):
-        """ Return True if the FsmContainer has exactly one path.
-        """
-        twoshortest = [p for p in
-                       pynini.shortestpath(self.fst, nshortest=2).paths()]
-        if len(twoshortest) == 1:
-            return True
-        return False
-
-    def __hash__(self):
-        return hash(self.fst.write_to_string() + 
-                    str(self.keySerializer).encode() +
-                    str(self.valueSerializer).encode())
-
-    # TODO cache
-    @property
-    def sigma(self):
-        """ Assemble set of symbols.
-
-        If c is an FsmContainer, c.sigma is an FsmSet containing each of the
-        symbols that appear in keys or values in c. c.sigma can be used as an
-        acceptor matching a single character.
-        """
-        sigma = set()
-        isyms = self.fst.input_symbols()
-        osyms = self.fst.output_symbols()
-        for state in self.fst.states():
-            for arc in self.fst.arcs(state):
-                sigma |= {pynini_utils.decode(isyms.find(arc.ilabel))}
-                sigma |= {pynini_utils.decode(osyms.find(arc.olabel))}
-                print(sigma)
-        return FsmSet(sigma)
-
-
-    @property
-    def sigma_star(self):
-        """ Assemble infinite set of combinations of symbols.
-        """
-
-        return self.sigma.closure()
 
     def __len__(self):
         try:
@@ -172,14 +25,29 @@ class FsmContainer(object):
             return float('inf')
         return len(list(a))
 
-    def isEmpty(self):
+    def __bool__(self):
+        return not self.lenCompare(0, operator.eq)
+
+    def lenCompare(self, n, op=operator.eq):
+            # __len__ can be expensive, but for the common case of
+            # comparing  __len__ to a small integer
+            # there is a cheap shortcut.
+        numPathsToTryFor = n + 1
         try:
-            next(self.fst.paths())
-        except StopIteration:
-            return True
-        except pywrapfst.FstArgError:
+            p = pynini.shortestpath(self.fst, nshortest=numPathsToTryFor).paths()
+            numPathsFound = len(list(p))
+        except pywrap.FstArgError:
+            # Signals a cyclic FST with infinite length, which
+            # can't equal any finite integer -- so False regardless of n.
             return False
+        if op(numPathsFound, n):
+            return True
         return False
+
+    def __hash__(self):
+        return hash(self.fst.write_to_string() + 
+                    str(self.keySerializer).encode() +
+                    str(self.valueSerializer).encode())
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
@@ -201,90 +69,70 @@ class FsmContainer(object):
             return False
         return True
 
-    # Operations that return a new FsmContainer
-    ###########################################
-
-    def closure(self):
-        """ Return a FsmContainer containing the closure of items in this one.
+    @classmethod
+    def _binary_op(cls, function):
+        """ wrap a pynini two-argument constructive function as a binary
+        operation.
         """
-        cls = type(self)
-        return cls.fromFst(fst=pynini.closure(self.fst),
-                           keySerializer=self.keySerializer,
-                           valueSerializer=self.valueSerializer)
+        def innerFunction(self, other):
+            if not type(other) == type(self):
+                raise TypeError
+            if self.keySerializer != other.keySerializer:
+                raise ValueError
+            if self.valueSerializer != other.valueSerializer:
+                raise ValueError
+            return type(self).fromFst(
+                    fst=function(self.fst, other.fst).optimize(),
+                    keySerializer=self.keySerializer,
+                    valueSerializer=other.valueSerializer)
+        return innerFunction
 
-    def project(self, side="key"):
-        if side not in {"key", "value"}:
-            raise ValueError
-
-        project_output = (side == "value")
-
-        if side == "key":
-            codec = self.keySerializer
-        else:
-            codec = self.valueSerializer
-
-        return FsmSet.fromFst(
-                fst=self.fst.copy().project(project_output=project_output), 
-                keySerializer=codec, 
-                valueSerializer=codec)
-
-    def copy(self):
-        cls = type(self)
-        out = cls.__new__(cls)
-        for k, v in self.__dict__.items():
-            setattr(out, k, v)
-        return out
-
-    # Iterator methods
-    ##################
-
-
-    def paths(self, limit=None, side=None):
-        """ Attempt to return an iterator over keys in this FsmContainer.
-
-        If an FsmContainer is cyclic (infinite), a limit must be specified,
-        since Pynini refuses to construct infinite iterators.
-
-        TODO: find a workaround for this.
+    @classmethod
+    def _product_op(cls, function, rightHanded="True"):
+        """ wrap a pynini two-argument constructive function as a binary
+        operation.
         """
+        def innerFunction(self, other):
+            if not isinstance(other, FsmContainer):
+                raise TypeError
+            if self.valueSerializer != other.keySerializer:
+                raise ValueError
+            if rightHanded:
+                fst = function(other.fst, self.fst)
+            else:
+                fst = function(self.fst, other.fst)
+            return type(self).fromFst(fst=fst.optimize(),
+                               keySerializer=self.keySerializer, 
+                               valueSerializer=other.valueSerializer)
+        return innerFunction
 
-        if limit is None:
-            try:
-                stringpaths = self.fst.paths(
-                    input_token_type='symbol',
-                    output_token_type='symbol')
-            except pywrapfst.FstArgError:
-                raise ValueError(
-                    "Unlimited iteration over cyclic (i.e. infinite)"
-                    "FsmContainers is not supported. Specify a positive"
-                    "integer as a value for limit.")
-        else:
-            stringpaths = pynini.shortestpath(self.fst, nshortest=limit).paths(
-                input_token_type='symbol',
-                output_token_type='symbol')
-        if side=="key":
-            for stringpath in stringpaths:
-                yield self.keySerializer.inflate(
-                        pynini_utils.decode(stringpath[0]))
-        elif side=="value":
-            for stringpath in stringpaths:
-                yield self.keySerializer.inflate(
-                        pynini_utils.decode(stringpath[1]))
-        else:
-            for stringpath in stringpaths:
-                yield (self.keySerializer.inflate(
-                            pynini_utils.decode(stringpath[0])),
-                       self.keySerializer.inflate(
-                            pynini_utils.decode(stringpath[1])))
 
 
 @functools.total_ordering
 class FsmSet(FsmContainer):
+    """ An immutable set backed by a finite state acceptor, implementing all
+    Python set operations plus the FSM operations of closure, sigma, sigmaStar,
+    concatenation (+), and composition (*) or lenient composition (%) with an
+    FsmMap.
+    """
 
-    # Constructors
-    ##############
+#   Many operations are implemented indirectly:
+#
+#    - closure, sigma, and sigmaStar are inherited from PyniniWrapper.
+#
+#    - __bool__, __contains__, __hash__, and __len__ are inherited from
+#      FsmContainer.
+#
+#    - functools.total_ordering takes care of comparison operators beyond
+#      __ge__ (implemented here) and __eq__ (inherited from FsmContainer).
+#
+#    - FsmContainer._binary_op and FsmContainer._product_op are used to
+#      produce magic methods for other binary operators.
 
     def __init__(self, *args, **kwargs):
+        """ Construct an FsmSet from any combination of arguments accepted
+        by the builtin set() constructor. 
+        """
         if len(args) == 1 and isinstance(args[0], FsmSet):
             return args[0].copy()
         as_set = set(*args, **kwargs)
@@ -293,11 +141,9 @@ class FsmSet(FsmContainer):
         self.keySerializer = a.keySerializer
         self.valueSerializer = a.valueSerializer
 
-
-    # Accessors and iterators
-    #########################
-
     def unwrap(self):
+        """ From an FsmSet with one element, return that element.
+        """
         if self.isScalar():
             out, _, _ = next(self.fst.paths(input_token_type="symbol",
                                             output_token_type="symbol"))
@@ -305,9 +151,6 @@ class FsmSet(FsmContainer):
         else:
             raise ValueError("Cannot unwrap a set that contains more than"
                              "one item.")
-
-    def draw(self, n=1):
-        return pynini.randgen(self.fst, npath)
 
     def __iter__(self, limit=None):
         return self.paths(limit=limit, side="key")
@@ -320,18 +163,15 @@ class FsmSet(FsmContainer):
             return "FsmSet({%s, ... })" % exampleString
         return "FsmSet({%s})" % exampleString
 
-    # Binary ops
-    ############
-
-    __add__ = FsmContainer.binary_op(pynini.concat)
-    __and__ = FsmContainer.binary_op(pynini.intersect)
-    __or__  = FsmContainer.binary_op(pynini.union)
-    __sub__ = FsmContainer.binary_op(pynini.difference)
-    __xor__ = FsmContainer.binary_op(
+    __add__ = FsmContainer._binary_op(pynini.concat)
+    __and__ = FsmContainer._binary_op(pynini.intersect)
+    __or__  = FsmContainer._binary_op(pynini.union)
+    __sub__ = FsmContainer._binary_op(pynini.difference)
+    __xor__ = FsmContainer._binary_op(
                 lambda self, other: (self | other) - (self & other))
-    __mul__ = FsmContainer.product_op(pynini.compose)
+    __mul__ = FsmContainer._product_op(pynini.compose)
     if six.PY3:
-        __matmul__ = FsmContainer.product_op(pynini.leniently_compose)
+        __matmul__ = FsmContainer._product_op(pynini.leniently_compose)
 
 
     def __ge__(self, other):
@@ -343,18 +183,36 @@ class FsmSet(FsmContainer):
             return True
         return False
 
-    # @functools.total_ordering takes care of other comparison operators after
-    # we've specified these two.
-
-
 
 class FsmMap(FsmContainer):
+    """ An immutable multimapping backed by a finite state transducer. If
+    a key corresponds to multiple values, subscripting gives the shortest value
+    if the transducer is unweighted, or the one with greatest weight if the
+    transducer is weighted. To get more values, use FsmMap.all or
+    FsmMap.only(n) with n>1. Implements all Python map operations plus
+    closure, projection, sigma, sigmaStar, concatenation (+), composition (*),
+    lenient composition (%), inversion (~ or .inv), and union (|). """
+
+#   Many operations are implemented indirectly:
+#
+#    - closure, sigma, and sigmaStar are inherited from PyniniWrapper.
+#
+#    - __bool__, __contains__, __hash__, and __len__ are inherited from
+#      FsmContainer.
+#
+#    - FsmContainer._binary_op and FsmContainer._product_op are used to
+#      produce magic methods for all binary operators.
+
+    __projection_class__ = FsmSet
 
     def __init__(self, *args, **kwargs):
         if len(args) == 1:
             if isinstance(args[0], dict):
                 pairs = list(args[0].items())
-            pairs = list(args[0])
+            else:
+                pairs = list(args[0])
+        else:
+            pairs = [()]
         pairs += list(kwargs.items())
         a = FsmMap.fromPairs(pairs)
         self.fst = a.fst
@@ -424,13 +282,10 @@ class FsmMap(FsmContainer):
             exampleString += " ... "
         return "FsmMap({%s})" % exampleString
 
-    # Binary ops
-    ############
-
-    __add__ = FsmContainer.binary_op(pynini.concat)
-    __or__  = FsmContainer.binary_op(pynini.union)
-    __mul__ = FsmContainer.product_op(pynini.compose)
+    __add__ = FsmContainer._binary_op(pynini.concat)
+    __or__  = FsmContainer._binary_op(pynini.union)
+    __mul__ = FsmContainer._product_op(pynini.compose)
     if six.PY3:
-        __matmul__ = FsmContainer.product_op(pynini.leniently_compose)
+        __matmul__ = FsmContainer._product_op(pynini.leniently_compose)
 
 
