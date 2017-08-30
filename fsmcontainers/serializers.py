@@ -1,5 +1,4 @@
 import six
-from . import pynini_utils
 
 class Serializer(object):
     """ This class does two jobs: It is a lightweight base class for
@@ -25,13 +24,6 @@ class Serializer(object):
 
     def inflate(self, string):
         return NotImplemented
-
-    def can_serialize(self, string):
-        try: 
-            pynini_utils.encode(self.serialize(string))
-        except ValueError:
-            return False
-        return True
 
     @classmethod
     def from_prototype(cls, obj):

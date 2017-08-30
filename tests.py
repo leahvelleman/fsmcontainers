@@ -26,6 +26,8 @@ from hypothesis.strategies import *
 from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 from fsmcontainers import *
 from fsmcontainers.fsmcontainers.serializers import Serializer, braces_balanced
+from fsmcontainers.fsmcontainers.wrappers import PyniniWrapper
+from random import shuffle
 
 @composite
 def texttuples(draw, n=None):
@@ -92,78 +94,134 @@ def test_unsupported_prototype_error(obj):
     with pytest.raises(TypeError):
         Serializer.from_prototype(obj)
 
-@given(packable())
-def test_can_create_a_set(obj):
-    assume(all(not "\0" in o for o in obj))
-    try:
-        fs = FsmSet(obj)
-    except ValueError:
-        reject()
-    assert isinstance(fs, FsmSet)
+usabletext = lambda: text(alphabet=characters(
+    blacklist_characters=['\0', '\1'],
+    blacklist_categories=['Cs']))
 
-@given(text())
-def test_can_create_a_set_from_an_acceptor(obj):
-    a = pynini.acceptor(obj, token_type="utf8")
-    fs = FsmSet.fromFst(fst=a,
-                        keySerializer=Serializer.from_prototype(obj),
-                        valueSerializer=Serializer.from_prototype(obj))
-    assert isinstance(fs, FsmSet)
+transducertext = lambda: lists(tuples(usabletext(), usabletext()))
 
-@given(text())
-def test_input_chars_appear_in_sigma(obj):
-    assume(obj != '')
-    try:
-        assert FsmSet(obj) == FsmSet({obj}).sigma
-    except ValueError:
-        reject()
+@composite
+def acceptortext(draw):
+    n = draw(lists(usabletext()))
+    return list(zip(n,n))
 
-@given(text())
-def test_sets_are_truthy_iff_nonempty(obj):
-    try:
-        a = FsmSet(obj)
-    except ValueError:
-        reject()
-    assert bool(a) == (len(obj) > 0)
+@composite
+def transducers(draw):
+    pairs = draw(transducertext())
+    transducer = PyniniWrapper.fromPairs(pairs)
+    return transducer
 
-# TODO:
-#   FstSet({1:2}) == FstSet({1})?
-#   Are there other set constructor possibilities we're overlooking?
+@given(transducertext())
+def test_wrapper_from_pairs(items):
+    assume(items)
+    wrapper = PyniniWrapper.fromPairs(items)
+    assert wrapper
 
+@given(transducertext())
+def test_item_order_is_unimportant(items):
+    assume(items)
+    wrapper1 = PyniniWrapper.fromPairs(items)
+    shuffle(items)
+    wrapper2 = PyniniWrapper.fromPairs(items)
+    assert wrapper1 == wrapper2
 
-@given(dictionaries(text(), text()))
-def test_double_inversion_is_noop(d):
-    assume(len(d) > 0)
-    try:
-        a = FsmMap(d)
-    except ValueError:
-        reject()
-    assert a == ~~a
+@given(transducertext())
+def test_input_items_are_accepted(items):
+    assume(items)
+    wrapper = PyniniWrapper.fromPairs(items)
+    for item in items:
+        assert wrapper.accepts(item[0], side="top")
+        assert wrapper.accepts(item[1], side="bottom")
 
-@given(dictionaries(text(), text()), dictionaries(text(), text()), choices())
-def test_composition_is_application(d1, d2, cf):
-    assume(len(d1) > 0 and len(d2) > 0)
-    try:
-        a = FsmMap(d1)
-        b = FsmMap(d2)
-    except ValueError:
-        reject()
-    aob = a*b
-    assume([k for k in aob.keys()] != [])
-    k = cf([k for k in aob.keys()])
-    assert (a*b)[k] == b[a[k]]
+@given(transducertext(), transducertext())
+def test_noninput_items_are_not_accepted(items, redHerrings):
+    assume(items)
+    tops, bottoms = zip(*items)
+    wrapper = PyniniWrapper.fromPairs(items)
+    for rh in redHerrings:
+        if rh[0] in tops and rh[1] in bottoms:
+            reject()
+        if rh[0] not in tops:
+            assert not wrapper.accepts(rh[0], side="top")
+        if rh[1] not in bottoms:
+            assert not wrapper.accepts(rh[1], side="bottom")
 
-@given(dictionaries(text(), text()), dictionaries(text(), text()), choices())
-def test_concatenation_is_distributive(d1, d2, cf):
-    assume(len(d1) > 0 and len(d2) > 0)
-    try:
-        a = FsmMap(d1)
-        b = FsmMap(d2)
-    except ValueError:
-        reject()
-    apb = a+b
-    akey = cf([k for k in a.keys()])
-    bkey = cf([k for k in b.keys()])
-    assert apb[akey+bkey] == a[akey]+b[bkey]
+@given(transducertext())
+def test_pathIterator_sidedness(items):
+    keys = [item[0] for item in items]
+    values = [item[1] for item in items]
+    wrapper = PyniniWrapper.fromPairs(items)
+    assert set(keys) == set(wrapper.pathIterator(side="key"))
+    assert set(values) == set(wrapper.pathIterator(side="value"))
+    assert set(items) == set(wrapper.pathIterator(side=None))
+
+@given(transducertext(), transducertext())
+def test_concatenation(items1, items2):
+    assume(items1)
+    assume(items2)
+    wrapper1 = PyniniWrapper.fromPairs(items1)
+    wrapper2 = PyniniWrapper.fromPairs(items2)
+    result = wrapper1.concatenate(wrapper2)
+    paths = result.pathIterator(side=None)
+    manualResult = []
+    for i1 in items1:
+        for i2 in items2:
+            manualResult += [(i1[0]+i2[0], i1[1]+i2[1])]
+    assert set(manualResult) == set(paths)
+
+@given(transducertext(), transducertext())
+def test_transducer_union_mimics_set_union(items1, items2):
+    assume(items1)
+    assume(items2)
+    wrapper1 = PyniniWrapper.fromPairs(items1)
+    wrapper2 = PyniniWrapper.fromPairs(items2)
+    result = set(wrapper1.union(wrapper2).pathIterator(side=None))
+    manualResult = set(items1) | set(items2)
+    assert result == manualResult
+
+@given(acceptortext(), acceptortext())
+def test_acceptor_intersection_mimics_set_intersection(items1, items2):
+    assume(items1)
+    assume(items2)
+    wrapper1 = PyniniWrapper.fromPairs(items1)
+    wrapper2 = PyniniWrapper.fromPairs(items2)
+    result = set(wrapper1.intersect(wrapper2).pathIterator(side=None))
+    manualResult = set(items1) & set(items2)
+    assert result == manualResult
+
+@given(acceptortext(), acceptortext())
+def test_acceptor_subtraction_mimics_set_subtraction(items1, items2):
+    assume(items1)
+    assume(items2)
+    wrapper1 = PyniniWrapper.fromPairs(items1)
+    wrapper2 = PyniniWrapper.fromPairs(items2)
+    result = set(wrapper1.subtract(wrapper2).pathIterator(side=None))
+    manualResult = set(items1) - set(items2)
+    assert result == manualResult
+
+@given(transducertext())
+def test_projection(items):
+    assume(items)
+    tops, bottoms = zip(*items)
+    wrapper = PyniniWrapper.fromPairs(items)
+    topwrapper = wrapper.project(side="key")
+    bottomwrapper = wrapper.project(side="value")
+    for i in tops:
+        assert topwrapper.accepts(i)
+        if i not in bottoms:
+            assert not bottomwrapper.accepts(i)
+    for i in bottoms:
+        assert bottomwrapper.accepts(i)
+        if i not in bottoms:
+            assert not bottomwrapper.accepts(i)
+
+@given(transducertext(), integers(min_value=0, max_value=5))
+def test_star(items, n):
+    assume(items)
+    wrapper = PyniniWrapper.fromPairs(items).star()
+    for i in items:
+        assert wrapper.accepts(i[0]*n, side="top")
+        assert wrapper.accepts(i[1]*n, side="bottom")
 
 
 def normalize_equal(a, b):
