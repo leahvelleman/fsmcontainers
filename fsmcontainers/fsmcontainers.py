@@ -8,7 +8,40 @@ class fsmcontainer(object):
         return NotImplemented
 
     def initializeWithPairs(self, pairs):
-        self.fsm = PyniniWrapper.fromPairs(pairs)
+        try:
+            kproto, vproto, rest = *next(pairs), pairs
+                # Try popping off a (k,v) pair to serve as prototypes for
+                # serializers.
+            pairs = chain([(kproto, vproto)], rest)
+                # Reinsert the pair we popped at the head of the chain.
+                # This saves eagerly constructing a complete list just so we
+                # can index its first item.
+        except StopIteration:
+            kproto, vproto = ("", "")
+        self.keySerializer = Serializer.from_prototype(kproto)
+        self.valueSerializer = Serializer.from_prototype(vproto)
+        self.fsm = PyniniWrapper.fromPairs(self._serializePair(p)
+                                            for p in pairs)
+
+    def _serializePair(self, pair):
+        k, v = pair
+        return (self._serializeKey(k), self._serializeValue(v))
+
+    def _serializeKey(self, key):
+        return self.keySerializer.serialize(key)
+
+    def _serializeValue(self, value):
+        return self.valueSerializer.serialize(value)
+
+    def _inflatePair(self, pair):
+        k, v = pair
+        return (self._inflateKey(k), self._inflateValue(v))
+
+    def _inflateKey(self, key):
+        return self.keySerializer.inflate(key)
+
+    def _inflateValue(self, value):
+        return self.valueSerializer.inflate(value)
 
     def __contains__(self, key):
         return self.fsm.accepts(key)
@@ -45,9 +78,10 @@ class fsmdict(fsmcontainer):
         return next(self.query(key))
 
     def query(self, key):
-        keyFsm = PyniniWrapper.fromItem(key)
+        keyFsm = PyniniWrapper.fromItem(self._serializeKey(key))
         for k, v in keyFsm.compose(self.fsm).pathIterator():
-            yield v    # Eventually refactor this to return an fsmset, not an
+            yield self._inflateValue(v)    
+                       # Eventually refactor this to return an fsmset, not an
                        # iterator
 
     def keys(self):

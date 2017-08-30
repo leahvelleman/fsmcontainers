@@ -6,20 +6,63 @@ from hypothesis.strategies import *
 from hypothesis.stateful import RuleBasedStateMachine, Bundle, rule
 from fsmcontainers import *
 from .tests import usabletext, transducertext
+import random
 
+kwargdicts = lambda: one_of(dictionaries(usabletext(), usabletext()),
+                             dictionaries(usabletext(),
+                                 tuples(usabletext(), usabletext())))
+
+argdicts = lambda: one_of(kwargdicts(), 
+                            dictionaries(
+                                tuples(usabletext(), usabletext()),
+                                tuples(usabletext(), usabletext())))
 
 @composite
 def fsmdicts(draw):
     pairs = draw(transducertext())
     return fsmdict(pairs)
 
-@given(fsmdicts())
-def test_repr(d):
-    assert eval(repr(d)) == d
+def test_empty_constructor():
+    a = fsmdict()
+    assert type(a) == fsmdict
 
-@given(fsmdicts())
-def test_keys_items_and_values_have_same_length(d):
-    assert len(list(d.keys())) == len(list(d.values())) == len(list(d.items()))
+@given(kwargdicts())
+def test_kwarg_constructor(kwargs):
+    a = fsmdict(**kwargs)
+    assert type(a) == fsmdict
+    for k, v in kwargs.items():
+        assert v in a.query(k)
+
+@given(usabletext(), one_of(kwargdicts(), nothing()))
+def test_constructor_fails_with_sequence_with_wrong_size_elements(s, kwargs):
+    assume(s)
+    with pytest.raises(ValueError):
+        a = fsmdict(s, **kwargs)
+        assert a
+
+@given(argdicts(), one_of(kwargdicts(), nothing()))
+def test_mapping_constructor_with_dict_and_maybe_kwargs(d, kwargs):
+    assume(d)
+    if kwargs:
+        assume(type(list(d.values())[0]) == type(list(kwargs.values())[0]))
+        assume(type(list(d.keys())[0]) == type(list(kwargs.keys())[0]))
+    a = fsmdict(d, **kwargs)
+    for k, v in d.items():
+        assert v in a.query(k)
+    for k, v in kwargs.items():
+        assert v in a.query(k)
+
+@given(lists(usabletext()), lists(usabletext()),
+        one_of(dictionaries(usabletext(), usabletext()), nothing()))
+def test_iterable_constructor_with_zip_and_maybe_kwargs(l1, l2, kwargs):
+    a = fsmdict(zip(l1, l2), **kwargs)
+    for k, v in zip(l1, l2):
+        assert v in a.query(k)
+    for k, v in kwargs.items():
+        assert v in a.query(k)
+
+
+
 
 @given(dictionaries(usabletext(), lists(usabletext(), min_size=1)))
 def test_query_retrieves_all_of_the_input_mappings_values(d):
@@ -47,43 +90,14 @@ def test_len_matches_set_length_of_input_iterable(l1, l2, kwargs):
     a = fsmdict(zip(l1, l2), **kwargs)
     assert len(a) == len(set(zip(l1, l2)) | set(kwargs.items()))
 
-@given(usabletext(), one_of(dictionaries(usabletext(), usabletext()),
-    nothing()))
-def test_constructor_fails_with_sequence_with_wrong_size_elements(s, kwargs):
-    assume(s)
-    with pytest.raises(ValueError):
-        a = fsmdict(s, **kwargs)
-        assert a
-
-@given(dictionaries(usabletext(), usabletext()),
-        one_of(dictionaries(usabletext(), usabletext()), nothing()))
-def test_mapping_constructor_with_dict_and_maybe_kwargs(d, kwargs):
-    a = fsmdict(d, **kwargs)
-    for k, v in d.items():
-        assert v in a.query(k)
-    for k, v in kwargs.items():
-        assert v in a.query(k)
-
-@given(lists(usabletext()), lists(usabletext()),
-        one_of(dictionaries(usabletext(), usabletext()), nothing()))
-def test_iterable_constructor_with_zip_and_maybe_kwargs(l1, l2, kwargs):
-    a = fsmdict(zip(l1, l2), **kwargs)
-    for k, v in zip(l1, l2):
-        assert v in a.query(k)
-    for k, v in kwargs.items():
-        assert v in a.query(k)
-
-@given(dictionaries(usabletext(), usabletext()))
-def test_kwarg_constructor(kwargs):
-    a = fsmdict(**kwargs)
-    assert type(a) == fsmdict
-    for k, v in kwargs.items():
-        assert v in a.query(k)
-
-def test_empty_constructor():
-    a = fsmdict()
-    assert type(a) == fsmdict
 
 
+@given(fsmdicts())
+def test_repr(d):
+    assert eval(repr(d)) == d
+
+@given(fsmdicts())
+def test_keys_items_and_values_have_same_length(d):
+    assert len(list(d.keys())) == len(list(d.values())) == len(list(d.items()))
 
 
