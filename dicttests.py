@@ -14,6 +14,10 @@ def fsmdicts(draw):
     return fsmdict(pairs)
 
 @given(fsmdicts())
+def test_repr(d):
+    assert eval(repr(d)) == d
+
+@given(fsmdicts())
 def test_keys_items_and_values_have_same_length(d):
     assert len(list(d.keys())) == len(list(d.values())) == len(list(d.items()))
 

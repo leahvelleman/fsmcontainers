@@ -22,6 +22,9 @@ class fsmcontainer(object):
         # iterator over keys to match stdlib dict behavior, and keys are on
         # top.
 
+    def __eq__(self, other):
+        return self.fsm == other.fsm
+
 class fsmdict(fsmcontainer):
     def __init__(self, *args, **kwargs):
         if len(args) > 1:
@@ -33,6 +36,10 @@ class fsmdict(fsmcontainer):
             pairs = arg.__iter__()
         pairs = chain(pairs, kwargs.items())
         self.initializeWithPairs(pairs)
+
+    def __repr__(self):
+        contents = repr(list(self.items()))
+        return f"fsmdict({contents})"
 
     def __getitem__(self, key):
         return next(self.query(key))
