@@ -80,8 +80,8 @@ class PyniniWrapper(EngineWrapper):
 
     @classmethod
     def fromPairs(cls, pairs):
-        pairs = cls.encodePairs(pairs)
-        fsm = pynini.string_map(pairs, 
+        fsm = pynini.string_map(
+                cls.encodePairs(pairs), 
                 input_token_type="utf8",
                 output_token_type="utf8")
         return cls(fsm)
@@ -96,6 +96,11 @@ class PyniniWrapper(EngineWrapper):
     @classmethod
     def fromItems(cls, items):
         pairs = cls.encodePairs(zip(items, items))
+        return cls.fromPairs(pairs)
+
+    @classmethod
+    def fromItem(cls, item):
+        pairs = cls.encodePairs([(item, item)])
         return cls.fromPairs(pairs)
 
     def __eq__(self, other):
