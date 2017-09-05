@@ -61,9 +61,6 @@ def test_iterable_constructor_with_zip_and_maybe_kwargs(l1, l2, kwargs):
     for k, v in kwargs.items():
         assert v in a.query(k)
 
-
-
-
 @given(dictionaries(usabletext(), lists(usabletext(), min_size=1)))
 def test_query_retrieves_all_of_the_input_mappings_values(d):
     pairs = [(k, v) for k in d for v in d[k]]
