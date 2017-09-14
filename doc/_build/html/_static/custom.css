@@ -1,0 +1,57 @@
+html {
+    --darkcolor: #4071a0;
+    --lightcolor: #f3f7fc;
+}
+
+body {
+    font-family: "Constantia";
+    font-size: 18px;
+}
+
+div.sphinxsidebar h1 {
+    margin: 0 0 5px 0;
+}
+
+div.sphinxsidebarwrapper {
+    padding: 0px;
+}
+
+div.body h1, div.body h2, div.body h3, div.body h4, div.body h5, div.body h6, div.sphinxsidebar h1, div.sphinxsidebar h2, div.sphinxsidebar h3, div.sphinxsidebar h3 a {
+    font-family: "Minion Pro", "Palatino";
+    font-weight: bold;
+    font-style: italic;
+    color: var(--darkcolor);
+}
+
+a, a.reference, div.sphinxsidebar a {
+    color: var(--darkcolor);
+    border-bottom: none;
+    text-decoration: none;
+}
+
+.postlist li p.first {
+    padding-top: 1em;
+}
+
+div.sphinxsidebar h3 {
+    display: none;
+}
+
+
+div.body p, div.body dd, div.body li {
+    line-height: 1.6;
+}
+
+ul.postlist {
+    margin: 0px;
+}
+
+div.related {
+    display: none;
+}
+
+pre {
+    background: var(--lightcolor);
+    padding: 7px 30px;
+    margin: 15px -30px;
+}

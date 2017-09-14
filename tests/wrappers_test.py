@@ -151,8 +151,8 @@ def test_pathIterator_sidedness(items):
     keys = [item[0] for item in items]
     values = [item[1] for item in items]
     wrapper = PyniniWrapper.fromPairs(items)
-    assert set(keys) == set(wrapper.pathIterator(side="key"))
-    assert set(values) == set(wrapper.pathIterator(side="value"))
+    assert set(keys) == set(wrapper.pathIterator(side="top"))
+    assert set(values) == set(wrapper.pathIterator(side="bottom"))
     assert set(items) == set(wrapper.pathIterator(side=None))
 
 @given(transducertext(), transducertext())
@@ -204,8 +204,8 @@ def test_projection(items):
     assume(items)
     tops, bottoms = zip(*items)
     wrapper = PyniniWrapper.fromPairs(items)
-    topwrapper = wrapper.project(side="key")
-    bottomwrapper = wrapper.project(side="value")
+    topwrapper = wrapper.project(side="top")
+    bottomwrapper = wrapper.project(side="bottom")
     for i in tops:
         assert topwrapper.accepts(i)
         if i not in bottoms:

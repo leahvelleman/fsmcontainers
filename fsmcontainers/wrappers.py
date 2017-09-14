@@ -4,6 +4,7 @@
 
 import collections
 import six
+import operator
 import pynini
 import pywrapfst
 from .serializers import Serializer
@@ -103,6 +104,15 @@ class PyniniWrapper(EngineWrapper):
         pairs = cls.encodePairs([(item, item)])
         return cls.fromPairs(pairs)
 
+    @classmethod
+    def transducer(cls, fsm1, fsm2):
+        if not isinstance(fsm1, cls):
+            fsm1 = PyniniWrapper.fromItem(fsm1)
+        if not isinstance(fsm2, PyniniWrapper):
+            fsm2 = PyniniWrapper.fromItem(fsm2)
+        fsm = pynini.transducer(fsm1.fsm, fsm2.fsm)
+        return cls(fsm)
+
     def __eq__(self, other):
         em = pynini.EncodeMapper("standard", True, True)
         return pynini.equivalent(pynini.encode(self.fsm, em).optimize(), 
@@ -131,10 +141,10 @@ class PyniniWrapper(EngineWrapper):
             stringpaths = pynini.shortestpath(self.fsm, nshortest=limit).paths(
                 input_token_type='symbol',
                 output_token_type='symbol')
-        if side=="key":
+        if side=="top":
             for stringpath in stringpaths:
                 yield pynini_decode(stringpath[0])
-        elif side=="value":
+        elif side=="bottom":
             for stringpath in stringpaths:
                 yield pynini_decode(stringpath[1])
         else:
@@ -143,23 +153,48 @@ class PyniniWrapper(EngineWrapper):
                        pynini_decode(stringpath[1]))
 
     concatenate = _constructiveOp(pynini.concat)
-    union = _constructiveOp(pynini.union)
-    priorityUnion = _constructiveOp(...)
+
+    def numPathsCompare(self, n, op=operator.eq):
+        numToTryFor = n+1
+        numFound = len(list(self.pathIterator(limit=numToTryFor)))
+        return op(numFound, n)
+
+    def isCyclic(self):
+        try: 
+            stringpaths = self.fsm.paths()
+        except pywrapfst.FstArgError:
+            return True
+        return False
+
+    def hasPaths(self):
+        return self.numPathsCompare(0, operator.gt)
 
     def intersect(self, other):
         self.fsm.optimize() # Pynini intersection will fail on unoptimized FSAs
         return _constructiveOp(pynini.intersect)(self, other)
 
+    def union(self, other):
+        obj = _constructiveOp(pynini.union)(self, other)
+        obj.fsm.optimize() # Counting paths is inaccurate after union unless
+                           # we do this. TODO: more robust solution.
+        return obj
+
+    priorityUnion = _constructiveOp(...)
+
     subtract = _constructiveOp(pynini.difference)
     compose = _constructiveOp(pynini.compose)
     lenientlyCompose = _constructiveOp(pynini.leniently_compose)
 
-    def project(self, side="key"):
-        if side not in {"key", "value"}:
+    def project(self, side="top"):
+        if side not in {"top", "bottom"}:
             raise ValueError
-        tf = (side == "value")
+        tf = (side == "bottom")
         cls = type(self)
         return cls(self.fsm.copy().project(project_output=tf))
+
+    def cross(self, other):
+        cls = type(self)
+        return cls(pynini.transducer(self.fsm, other.fsm))
 
     def star(self):
         cls = type(self)
@@ -178,7 +213,21 @@ class PyniniWrapper(EngineWrapper):
                 sigma |= {pynini_decode(isyms.find(arc.ilabel))}
                 sigma |= {pynini_decode(osyms.find(arc.olabel))}
         cls = type(self)
-        return cls((s,s) for s in sigma)
+        return cls.fromPairs((s,s) for s in sigma if "\x00" not in s)
+
+    def makeRewrite(self, 
+                    leftEnvironment=None, rightEnvironment=None,
+                    leftBottomTape=False, rightBottomTape=False,
+                    sigma=None):
+        cls = type(self)
+        left = leftEnvironment or cls.fromItem("")
+        right = rightEnvironment or cls.fromItem("")
+        sigma = sigma or (self.sigma()
+                          .union(left.sigma())
+                          .union(right.sigma())
+                          .star())
+        fsm = pynini.cdrewrite(self.fsm, left.fsm, right.fsm, sigma.fsm)
+        return cls(fsm)
 
     def findAmbiguity(self, strictness=100):
         """ Allauzen and Mohri: an FST f is functional (i.e. one-to-one or

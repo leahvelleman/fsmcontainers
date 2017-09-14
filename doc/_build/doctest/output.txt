@@ -1,0 +1,119 @@
+Results of doctest builder run on 2017-09-13 13:59:18
+=====================================================
+
+Document: index
+---------------
+**********************************************************************
+File "index.rst", line 16, in default (setup code)
+Failed example:
+    from fsmcontainers.fsmcontainers import fsa, fst
+    import operator
+Exception raised:
+    Traceback (most recent call last):
+      File "/opt/local/Library/Frameworks/Python.framework/Versions/3.6/lib/python3.6/doctest.py", line 1330, in __run
+        compileflags, 1), test.globs)
+      File "<doctest default (setup code)[0]>", line 1, in <module>
+        from fsmcontainers.fsmcontainers import fsa, fst
+      File "/Users/leahvelleman/src/fsmcontainers/fsmcontainers/fsmcontainers.py", line 285
+        """
+    Return a new finite state acceptor. The acceptor behaves like a
+    set whose elements are *items,* or whose elements are taken from 
+    *iterable.* Elements must be strings, or must be serializable as strings. 
+
+    If no arguments are specified, the result is an :class:`fsa` that
+    behaves like an empty set. 
+
+      >>> a = fsa()
+      >>> len(a)
+      0
+
+    If one string is specified, it is treated as a single item, and the result
+    is an :class:`fsa` that behaves like a one-element set. This is a different
+    behavior than Python's built-in :class:`set` constructor. (For a constructor
+    that mimics Python's built-in :class:`set` constructor exactly, use
+    :meth:`fsa.set`.) 
+
+      >>> a = fsa('a single long string argument') 
+      >>> b = set({'g', 'o', 't', 'a', 'l', ' ', 'm', 'e', 
+      ...          'i', 'u', 's', 'n', 'r'})
+      >>> a == b
+      False
+      >>> a
+      fsa(['a single long string argument'])
+
+    Unlike sets, acceptors can have an infinite number of elements. But
+    iterables passed to :class:`fsa` are eagerly evaluated, and so must be
+    finite.  If :class:`fsa` is passed, for instance, a generator that never
+    raises :err:`StopIteration`, it will draw new values endlessly and never
+    return.  To create a new infinite acceptor, use :meth:`plus` or :meth:`star`
+    on a finite acceptor, or use other operations on an existing infinite
+    acceptor.
+
+    Instances of :class:`fsa` provide all the same operations as built-in
+    Python :class:`set`, and compare equal to built-in sets with the same
+    elements::
+
+      >>> fsa({'one', 'two', 'three'}) & set({'three', 'four', 'five'})
+      fsa({'three'})
+      >>> fsa({'one', 'two'}) == set({'one', 'two'})
+      True
+      >>> fsa({'one', 'two'}) > set({'one'})
+      True
+    """
+           
+                                                                   
+                                                                     
+                                                                              
+
+                                                                     
+                               
+
+                   
+                
+       
+
+                                                                              
+                                                                               
+                                                                                
+                                                                       
+                      
+
+                                                   
+                                                           
+                                            
+                
+           
+           
+                                            
+
+                                                                       
+                                                                          
+                                                                            
+                                                                            
+                                                                                
+                                                                         
+             
+
+                                                                         
+                                                                         
+              
+
+                                                                       
+                    
+                                                    
+          
+                                            
+          
+      ^
+    IndentationError: expected an indented block
+**********************************************************************
+1 items had failures:
+   1 of   1 in default (setup code)
+***Test Failed*** 1 failures.
+
+Doctest summary
+===============
+    0 tests
+    0 failures in tests
+    1 failure in setup code
+    0 failures in cleanup code
