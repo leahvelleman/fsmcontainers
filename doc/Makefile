@@ -6,7 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = python -msphinx
 SPHINXPROJ    = fsmcontainers
 SOURCEDIR     = .
-BUILDDIR      = _build
+BUILDDIR      = ../../fsmcontainers-doc
 
 # Put it first so that "make" without argument is like "make help".
 help:
