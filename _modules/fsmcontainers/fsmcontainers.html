@@ -63,9 +63,7 @@
 <span class="kn">from</span> <span class="nn">.wrappers</span> <span class="k">import</span> <span class="n">PyniniWrapper</span>
 <span class="kn">from</span> <span class="nn">.serializers</span> <span class="k">import</span> <span class="n">Serializer</span>
 
-<span class="n">SIGMA</span> <span class="o">=</span> <span class="s2">&quot;qwertyuiopasdfghjkl;&#39;zxcvbnm,./`1234567890-=QWERTYUIOP</span><span class="si">{}</span><span class="s2">|ASDFGHJKL:</span><span class="se">\&quot;</span><span class="s2">ZXCVBNM&lt;&gt;?~!@#$%^&amp;*()_+ &quot;</span>
-
-
+<span class="n">SIGMA</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="s2">&quot;qwertyuiopasdfghjkl;&#39;zxcvbnm,./`1234567890-=QWERTYUIOP</span><span class="si">{}</span><span class="s2">|ASDFGHJKL:</span><span class="se">\&quot;</span><span class="s2">ZXCVBNM&lt;&gt;?~!@#$%^&amp;*()_+ &quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="fsmcontainer"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fsmcontainer">[docs]</a><span class="k">class</span> <span class="nc">fsmcontainer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -324,13 +322,6 @@
 <span class="sd">      &gt;&gt;&gt; len(a)</span>
 <span class="sd">      3</span>
 
-<span class="sd">      &gt;&gt;&gt; from fsa import unalignedtuple</span>
-<span class="sd">      &gt;&gt;&gt; word = unalignedtuple(&#39;word&#39;, &#39;form lemma POS&#39;)</span>
-<span class="sd">      &gt;&gt;&gt; w1 = word(&#39;dove&#39;, &#39;dove&#39;, &#39;NN&#39;)</span>
-<span class="sd">      &gt;&gt;&gt; w2 = word(&#39;dove&#39;, &#39;dive&#39;, &#39;VB&#39;)</span>
-<span class="sd">      &gt;&gt;&gt; fsa(w1, w2) == {w1, w2}</span>
-<span class="sd">      True</span>
-
 <span class="sd">    If a single iterable is specified, and its items are valid elements, they</span>
 <span class="sd">    become elements of the :class:`fsa`.</span>
 
@@ -348,12 +339,13 @@
             <span class="k">return</span>
 
         <span class="c1"># single argument is a list -- unpack it and continue</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> 
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">)):</span>
             <span class="n">items</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="c1"># multiple str arguments, or a single iterable[str] that got unpacked,</span>
         <span class="c1"># or a single empty iterable that got unpacked, or no arguments at all</span>
-        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span><span class="p">):</span>
             <span class="n">pairs</span> <span class="o">=</span> <span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initializeWithPairs</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span>
 
@@ -476,10 +468,10 @@
         <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">({</span><span class="n">key</span><span class="p">})))</span>
 
     <span class="k">def</span> <span class="nf">__matmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_productOp</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">compose</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_productOp</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">compose</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__rmatmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">_productOp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">other</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">compose</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">_productOp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">compose</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">keyset</span><span class="p">()</span> <span class="o">@</span> <span class="n">other</span><span class="p">)</span>
@@ -522,6 +514,10 @@
                 <span class="n">fsm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">makeRewrite</span><span class="p">(</span><span class="n">left</span><span class="o">.</span><span class="n">fsm</span><span class="p">,</span> <span class="n">right</span><span class="o">.</span><span class="n">fsm</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="o">.</span><span class="n">fsm</span><span class="p">),</span>
                 <span class="n">keySerializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keySerializer</span><span class="p">,</span>
                 <span class="n">valueSerializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">)</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">doctest</span>
+    <span class="n">doctest</span><span class="o">.</span><span class="n">testmod</span><span class="p">()</span>
 </pre></div>
 
           </div>

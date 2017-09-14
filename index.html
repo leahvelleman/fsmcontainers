@@ -133,14 +133,6 @@ become elements of the <a class="reference internal" href="#fsmcontainers.fsmcon
 <span class="go">3</span>
 </pre></div>
 </div>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fsa</span> <span class="k">import</span> <span class="n">unalignedtuple</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">word</span> <span class="o">=</span> <span class="n">unalignedtuple</span><span class="p">(</span><span class="s1">&#39;word&#39;</span><span class="p">,</span> <span class="s1">&#39;form lemma POS&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">w1</span> <span class="o">=</span> <span class="n">word</span><span class="p">(</span><span class="s1">&#39;dove&#39;</span><span class="p">,</span> <span class="s1">&#39;dove&#39;</span><span class="p">,</span> <span class="s1">&#39;NN&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">w2</span> <span class="o">=</span> <span class="n">word</span><span class="p">(</span><span class="s1">&#39;dove&#39;</span><span class="p">,</span> <span class="s1">&#39;dive&#39;</span><span class="p">,</span> <span class="s1">&#39;VB&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">fsa</span><span class="p">(</span><span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span> <span class="o">==</span> <span class="p">{</span><span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">}</span>
-<span class="go">True</span>
-</pre></div>
-</div>
 <p>If a single iterable is specified, and its items are valid elements, they
 become elements of the <a class="reference internal" href="#fsmcontainers.fsmcontainers.fsa" title="fsmcontainers.fsmcontainers.fsa"><code class="xref py py-class docutils literal"><span class="pre">fsa</span></code></a>.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">fsa</span><span class="p">([</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;sequence&#39;</span><span class="p">,</span> <span class="s1">&#39;of&#39;</span><span class="p">,</span> <span class="s1">&#39;short&#39;</span><span class="p">,</span> <span class="s1">&#39;strings&#39;</span><span class="p">])</span>
