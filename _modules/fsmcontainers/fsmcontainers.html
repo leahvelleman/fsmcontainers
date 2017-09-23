@@ -66,10 +66,14 @@
 <span class="n">SIGMA</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="s2">&quot;qwertyuiopasdfghjkl;&#39;zxcvbnm,./`1234567890-=QWERTYUIOP</span><span class="si">{}</span><span class="s2">|ASDFGHJKL:</span><span class="se">\&quot;</span><span class="s2">ZXCVBNM&lt;&gt;?~!@#$%^&amp;*()_+ &quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="fsmcontainer"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fsmcontainer">[docs]</a><span class="k">class</span> <span class="nc">fsmcontainer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Abstract base class for containerlike fst and fsa objects. &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; To be implemented by subclasses. &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">NotImplemented</span>
 
     <span class="k">def</span> <span class="nf">_initializeWithPairs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pairs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set serializers and initialize a wrapped FSM based on a </span>
+<span class="sd">        sequence of (k,v) pairs. &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">kproto</span><span class="p">,</span> <span class="n">vproto</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="o">*</span><span class="nb">next</span><span class="p">(</span><span class="n">pairs</span><span class="p">),</span> <span class="n">pairs</span>
                 <span class="c1"># Try popping off a (k,v) pair to serve as prototypes for</span>
@@ -88,17 +92,21 @@
     <span class="k">def</span> <span class="nf">_initializeWithAttributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fsm</span><span class="p">,</span>
             <span class="n">keySerializer</span><span class="o">=</span><span class="n">Serializer</span><span class="o">.</span><span class="n">from_prototype</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">),</span>
             <span class="n">valueSerializer</span><span class="o">=</span><span class="n">Serializer</span><span class="o">.</span><span class="n">from_prototype</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot; Set serializers and FSM to values that are explicitly given. &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keySerializer</span> <span class="o">=</span> <span class="n">keySerializer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span> <span class="o">=</span> <span class="n">valueSerializer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span> <span class="o">=</span> <span class="n">fsm</span>
 
     <span class="k">def</span> <span class="nf">_initializeAsCopy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set serializers and FSM to be identical to those of `other`.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keySerializer</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">keySerializer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">valueSerializer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">fsm</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">fromAttributes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fsm</span><span class="p">,</span> <span class="n">keySerializer</span><span class="p">,</span> <span class="n">valueSerializer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a new fsmcontainer from FSM and serializers that are</span>
+<span class="sd">        explicitly given. &quot;&quot;&quot;</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="n">obj</span><span class="o">.</span><span class="n">_initializeWithAttributes</span><span class="p">(</span><span class="n">fsm</span><span class="p">,</span> <span class="n">keySerializer</span><span class="p">,</span> <span class="n">valueSerializer</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">obj</span>
@@ -124,12 +132,16 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span><span class="o">.</span><span class="n">inflate</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an fsm whose items are made up of an item</span>
+<span class="sd">        from *self* concatenated with an item from *other*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binaryOp</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">concatenate</span><span class="p">)</span>
 
 <div class="viewcode-block" id="fsmcontainer.concatenate"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fsmcontainer.concatenate">[docs]</a>    <span class="k">def</span> <span class="nf">concatenate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return an :class:`fsa` whose elements are made up of an element</span>
-<span class="sd">        of *s* concatenated with an element of *t*.</span>
+<span class="sd">        Return an fsm whose items are made up of an item</span>
+<span class="sd">        from *self* concatenated with an item of each of the *others*.</span>
 
 <span class="sd">        &gt;&gt;&gt; this = fsa(&#39;a&#39;, &#39;b&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; other = fsa(&#39;c&#39;, &#39;d&#39;)</span>
@@ -146,6 +158,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binaryOp</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">union</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an fsm containing all the items from *self* and all the</span>
+<span class="sd">        items from each of the *others*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">others</span><span class="p">:</span>
@@ -153,6 +169,12 @@
         <span class="k">return</span> <span class="n">obj</span>
 
     <span class="k">def</span> <span class="nf">_binaryOp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper function for implementing ordinary binary operations with </span>
+<span class="sd">        sum-like semantics. Ensures that the operands have compatible</span>
+<span class="sd">        serialization protocols, applies the operation, and sets the</span>
+<span class="sd">        protocols on the result.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_typecheck</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">fromAttributes</span><span class="p">(</span>
@@ -161,6 +183,13 @@
                 <span class="n">valueSerializer</span><span class="o">=</span><span class="n">other</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_productOp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper function for implementing cross product and composition. Ensures</span>
+<span class="sd">        that the operands have compatible serialization protocols, applies the</span>
+<span class="sd">        operation, and sets the protocols on the result. Optionally allows the</span>
+<span class="sd">        result class to be different from the operand classes, since cross</span>
+<span class="sd">        product requires this.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="bp">cls</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">keySerializer</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span>
@@ -169,19 +198,28 @@
                                   <span class="n">valueSerializer</span><span class="o">=</span><span class="n">other</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_typecheck</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper function to check serialization protocol compatibility for</span>
+<span class="sd">        binary operations and for context-sensitive rewrite rules.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">others</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">keySerializer</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">keySerializer</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span>
 
-    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">accepts</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyOrElement</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return true if this instance has *keyOrElement* as an element (for</span>
+<span class="sd">        `fsa`) or as a key (for `fst`).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">accepts</span><span class="p">(</span><span class="n">keyOrElement</span><span class="p">)</span>
 
 <div class="viewcode-block" id="fsmcontainer.__len__"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fsmcontainer.__len__">[docs]</a>    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return the number of elements in *a*. If *a* is a cyclic acceptor with an</span>
-<span class="sd">        infinite number of elements, return :literal:`float(&#39;inf&#39;)`.</span>
+<span class="sd">        Return the number of elements in this instance. If this is a cyclic</span>
+<span class="sd">        acceptor with an infinite number of elements, return</span>
+<span class="sd">        :literal:`float(&#39;inf&#39;)`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">pathIterator</span><span class="p">()))</span></div>
 
@@ -221,12 +259,20 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">numPathsCompare</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return an iterator over elements (for an `fsa`) or keys (for an</span>
+<span class="sd">        `fst`) in this instance. &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">(</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
-        <span class="c1"># Sides are equivalent for an fsmset; for an fst, we want an</span>
-        <span class="c1"># iterator over keys to match stdlib dict behavior, and keys are on</span>
-        <span class="c1"># top.</span>
+        <span class="c1"># &quot;top&quot; is an ok choice in either case: for `fsa`, because the</span>
+        <span class="c1"># sides are equivalent so either side is correct; for `fst`, because we</span>
+        <span class="c1"># want keys and keys are on top.</span>
 
     <span class="k">def</span> <span class="nf">_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">side</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Helper function returning an iterator over objects accepted by the</span>
+<span class="sd">        top side or bottom side (as in `iter(fsa)`, `iter(fst)`, `fst.keys()` or</span>
+<span class="sd">        `fst.values()`) or object pairs from both sides (as in `fst.items()`).</span>
+<span class="sd">        Optionally limit the number of objects or pairs that will be yielded;</span>
+<span class="sd">        if this instance is cyclic and no limit is specified, the result will</span>
+<span class="sd">        be an error.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="s2">&quot;both&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_inflateKey</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inflateValue</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
                     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">pathIterator</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">))</span>
@@ -238,9 +284,16 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">pathIterator</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; For an `fsa`, return True if other is an iterable or `fsa` with the</span>
+<span class="sd">        same elements as this instance. For an `fst`, return True if other is a</span>
+<span class="sd">        mapping or `fst` with the same keys and values associated in the same</span>
+<span class="sd">        way, or if it is an iterable containing all of the (k,v) pairs from</span>
+<span class="sd">        this instance. &quot;&quot;&quot;</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">other</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">fsm</span>
+        <span class="c1"># TODO: also check that self and other have compatible serialization</span>
+        <span class="c1"># protocols.</span>
 
     <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
@@ -277,8 +330,8 @@
 
 <div class="viewcode-block" id="fsmcontainer.plus"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fsmcontainer.plus">[docs]</a>    <span class="k">def</span> <span class="nf">plus</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return an :class:`fsa` whose elements are made by concatenating</span>
-<span class="sd">        together one or more elements from the current instance.</span>
+<span class="sd">        Return an :class:`fsmcontainer` whose elements are made by</span>
+<span class="sd">        concatenating together one or more elements from the current instance.</span>
 <span class="sd">      </span>
 <span class="sd">             &gt;&gt;&gt; t = fsa({&#39;a&#39;, &#39;b&#39;}).plus()</span>
 <span class="sd">             &gt;&gt;&gt; &#39;a&#39; in t</span>
@@ -292,13 +345,15 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">fromAttributes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">plus</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">keySerializer</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">)</span></div></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">)</span></div>
 
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="fsa"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fsa">[docs]</a><span class="k">class</span> <span class="nc">fsa</span><span class="p">(</span><span class="n">fsmcontainer</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return a new finite state acceptor. The acceptor behaves like a set whose</span>
-<span class="sd">    elements are *items*, or are taken from *iterator.* Elements must all be</span>
+<span class="sd">    elements are *items*, or are taken from *iterable.* Elements must all be</span>
 <span class="sd">    strings, or must all be members of another class that implements</span>
 <span class="sd">    :literal:`fsm_serialize` and :literal:`fsm_deserialize` methods for</span>
 <span class="sd">    conversion to and from strings.</span>
@@ -353,7 +408,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span>
 
-
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repr</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
 
@@ -402,7 +456,15 @@
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span> <span class="o">-</span> <span class="n">other</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">other</span> <span class="o">-</span> <span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an :class:`fst` representing the cross product of *this*</span>
+<span class="sd">        and *other.* The resulting fst maps each value in *this* to each value</span>
+<span class="sd">        in *other*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_productOp</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">cross</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">fst</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__imul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;FSA cross-product can&#39;t be performed in place.&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="fsa.cross"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fsa.cross">[docs]</a>    <span class="k">def</span> <span class="nf">cross</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -447,11 +509,41 @@
 
 
 <div class="viewcode-block" id="fst"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fst">[docs]</a><span class="k">class</span> <span class="nc">fst</span><span class="p">(</span><span class="n">fsmcontainer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a new finite state transducer. The transducer behaves like a</span>
+<span class="sd">    dictionary or other mapping object, and :class:`fst` can be called with any</span>
+<span class="sd">    of the same argument combinations as :class:`dict`, with the same semantics</span>
+<span class="sd">    --- subject only to the restriction that its keys and values must be strings,</span>
+<span class="sd">    or must be serializable to strings.</span>
+<span class="sd"> </span>
+<span class="sd">    &gt;&gt;&gt; a = fst([(&#39;a&#39;, &#39;b&#39;), (&#39;c&#39;, &#39;d&#39;)], e=&#39;f&#39;, g=&#39;h&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; a[&#39;a&#39;]</span>
+<span class="sd">    &#39;b&#39;</span>
+<span class="sd">    &gt;&gt;&gt; a[&#39;e&#39;]</span>
+<span class="sd">    &#39;f&#39;</span>
+<span class="sd"> </span>
+<span class="sd">    In addition, fsts can map a single key to more than one value.  To create an</span>
+<span class="sd">    :class:`fst` with this property, call the constructor with an iterable as</span>
+<span class="sd">    its positional argument, or use keyword arguments that &quot;shadow&quot; keys in the</span>
+<span class="sd">    positional argument.</span>
+<span class="sd"> </span>
+<span class="sd">    &gt;&gt;&gt; a = fst([(&#39;a&#39;, &#39;b&#39;), (&#39;a&#39;, &#39;c&#39;)])</span>
+<span class="sd">    &gt;&gt;&gt; b = fst({&#39;a&#39;: &#39;b&#39;}, a=&#39;c&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; a == b</span>
+<span class="sd">    True</span>
+<span class="sd"> </span>
+<span class="sd">    When an fst maps a single key to more than one value, subscripting with</span>
+<span class="sd">    that key will return one arbitrary value.</span>
+<span class="sd"> </span>
+<span class="sd">    &gt;&gt;&gt; d = fst([(&#39;a&#39;, &#39;b&#39;), (&#39;a&#39;, &#39;c&#39;)])</span>
+<span class="sd">    &gt;&gt;&gt; d[&#39;a&#39;] in {&#39;b&#39;, &#39;c&#39;}</span>
+<span class="sd">    True</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;fst expected at most 1 arguments, got 2&quot;</span><span class="p">)</span>
         <span class="n">arg</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">fsa</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initializeAsCopy</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
@@ -460,6 +552,12 @@
                 <span class="n">pairs</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="fm">__iter__</span><span class="p">()</span>
             <span class="n">pairs</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="n">pairs</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_initializeWithPairs</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">fromAttributes</span><span class="p">(</span><span class="n">PyniniWrapper</span><span class="o">.</span><span class="n">fromFilename</span><span class="p">(</span><span class="n">filename</span><span class="p">),</span>
+                <span class="n">Serializer</span><span class="o">.</span><span class="n">from_prototype</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">),</span>
+                <span class="n">Serializer</span><span class="o">.</span><span class="n">from_prototype</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repr</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
@@ -470,26 +568,95 @@
     <span class="k">def</span> <span class="nf">__matmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_productOp</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">compose</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">__rmatmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">_productOp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">compose</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+<div class="viewcode-block" id="fst.compose"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fst.compose">[docs]</a>    <span class="k">def</span> <span class="nf">compose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an :class:`fst` whose key-value mapping comes from composing</span>
+<span class="sd">        *this* with each of the others in turn. </span>
 
-    <span class="k">def</span> <span class="nf">__truediv__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">keyset</span><span class="p">()</span> <span class="o">@</span> <span class="n">other</span><span class="p">)</span>
-
-<div class="viewcode-block" id="fst.priority_union"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fst.priority_union">[docs]</a>    <span class="k">def</span> <span class="nf">priority_union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">):</span>
+<span class="sd">        &gt;&gt;&gt; s = fst({&#39;input&#39;: &#39;intermediate&#39;})</span>
+<span class="sd">        &gt;&gt;&gt; t = fst({&#39;intermediate&#39;: &#39;output&#39;})</span>
+<span class="sd">        &gt;&gt;&gt; s @ t</span>
+<span class="sd">        fst([(&#39;input&#39;, &#39;output&#39;)])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">others</span><span class="p">:</span>
-            <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span> <span class="o">/</span> <span class="bp">cls</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span> <span class="o">@</span> <span class="n">other</span>
         <span class="k">return</span> <span class="n">obj</span></div>
 
-<div class="viewcode-block" id="fst.query"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fst.query">[docs]</a>    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">querySet</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">fsa</span><span class="p">(</span><span class="n">querySet</span><span class="p">)</span> <span class="o">@</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">valueset</span><span class="p">()</span></div>
+    <span class="k">def</span> <span class="nf">__rmatmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">_productOp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">compose</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_pu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="o">|</span> <span class="p">(</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">keyset</span><span class="p">()</span> <span class="o">@</span> <span class="bp">cls</span><span class="p">(</span><span class="n">other</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__rshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pu</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rlshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pu</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__lshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">other</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">_pu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__rrshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">other</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">_pu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="fst.priority_union"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fst.priority_union">[docs]</a>    <span class="k">def</span> <span class="nf">priority_union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an :class:`fst` that behaves like a</span>
+<span class="sd">        :class:`collections.ChainMap`, chaining together multiple underlying</span>
+<span class="sd">        mappings. For each key, the underlying mappings are searched in turn,</span>
+<span class="sd">        and the key is mapped to the first corresponding value that is found.</span>
+<span class="sd">        Suppose the mappings *f*, *g*, and *h* are as follows::</span>
+
+<span class="sd">           &gt;&gt;&gt; f = fst({&quot;a&quot;: &quot;1&quot;, &quot;b&quot;: &quot;1&quot;})</span>
+<span class="sd">           &gt;&gt;&gt; g = fst({&quot;a&quot;: &quot;2&quot;,           &quot;c&quot;: &quot;2&quot;})</span>
+<span class="sd">           &gt;&gt;&gt; h = fst({          &quot;b&quot;: &quot;3&quot;, &quot;c&quot;: &quot;3&quot;, &quot;d&quot;: &quot;3&quot;})</span>
+
+<span class="sd">        Then the result of a priority union will be as follows::</span>
+
+<span class="sd">           &gt;&gt;&gt; f &gt;&gt; g &gt;&gt; h</span>
+<span class="sd">           fst([(&quot;a&quot;, &quot;1&quot;), (&quot;b&quot;, &quot;1&quot;), (&quot;c&quot;, &quot;2&quot;), (&quot;d&quot;, &quot;3&quot;)])</span>
+<span class="sd">           &gt;&gt;&gt; f &lt;&lt; g &lt;&lt; h</span>
+<span class="sd">           fst([(&quot;a&quot;, &quot;2&quot;), (&quot;b&quot;, &quot;3&quot;), (&quot;c&quot;, &quot;3&quot;), (&quot;d&quot;, &quot;3&quot;)])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="n">others</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span> <span class="o">&gt;&gt;</span> <span class="bp">cls</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span></div>
+
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">querySet</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Treat non-string *iterable* as a collection of keys, or *string* as a</span>
+<span class="sd">        single key, and return an :class:`fsa` containing all the values which</span>
+<span class="sd">        correspond to any key.</span>
+<span class="sd">   </span>
+<span class="sd">            &gt;&gt;&gt; d = fst([(&#39;I&#39;, &#39;one&#39;), (&#39;II&#39;, &#39;two&#39;), (&#39;III&#39;, &#39;three&#39;), </span>
+<span class="sd">            ...              (&#39;IV&#39;, &#39;four&#39;), (&#39;V&#39;, &#39;five&#39;)])</span>
+<span class="sd">            &gt;&gt;&gt; d.query(&#39;IV&#39;)</span>
+<span class="sd">            fsa([&#39;four&#39;])</span>
+<span class="sd">            &gt;&gt;&gt; d.query(set(&#39;IV&#39;))</span>
+<span class="sd">            fsa([&#39;one&#39;, &#39;five&#39;])</span>
+<span class="sd">            &gt;&gt;&gt; d.query({&#39;I&#39;, &#39;III&#39;})</span>
+<span class="sd">            fsa([&#39;one&#39;, &#39;three&#39;])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">fsa</span><span class="p">(</span><span class="n">querySet</span><span class="p">)</span> <span class="o">@</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">valueset</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="fst.keyset"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fst.keyset">[docs]</a>    <span class="k">def</span> <span class="nf">keyset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the keys in the current instance as an :class:`fsa` rather than</span>
+<span class="sd">        an iterator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">fsa</span><span class="o">.</span><span class="n">fromAttributes</span><span class="p">(</span><span class="n">fsm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">),</span> 
                                      <span class="n">keySerializer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">,</span>
                                      <span class="n">valueSerializer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">)</span></div>
@@ -498,6 +665,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="fst.valueset"><a class="viewcode-back" href="../../index.html#fsmcontainers.fsmcontainers.fst.valueset">[docs]</a>    <span class="k">def</span> <span class="nf">valueset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the values in the current instance as an :class:`fsa` rather than</span>
+<span class="sd">        an iterator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">fsa</span><span class="o">.</span><span class="n">fromAttributes</span><span class="p">(</span><span class="n">fsm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fsm</span><span class="o">.</span><span class="n">project</span><span class="p">(</span><span class="n">side</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">),</span> 
                                      <span class="n">keySerializer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">,</span>
                                      <span class="n">valueSerializer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">valueSerializer</span><span class="p">)</span></div>

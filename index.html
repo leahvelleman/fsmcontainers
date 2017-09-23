@@ -65,13 +65,11 @@
 </div></blockquote>
 <p>These offer a Pythonic interface for using finite-state linguistic
 resources or hand-coding new ones.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;piglatin.fst&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-<span class="gp">... </span>   <span class="n">piglatin</span> <span class="o">=</span> <span class="n">fsa</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sentence</span> <span class="o">=</span> <span class="s1">&#39;do you speak pig latin&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">piglatin</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">sentence</span><span class="o">.</span><span class="n">split</span><span class="p">()])</span>
-<span class="go">&#39;oday ouyay eakspay igpay atinlay&#39;</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">fsmcontainers</span> <span class="k">import</span> <span class="n">fst</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">piglatin</span> <span class="o">=</span> <span class="n">fst</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;piglatin.fst&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sentence</span> <span class="o">=</span> <span class="s1">&#39;do you speak pig latin&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">piglatin</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">sentence</span><span class="o">.</span><span class="n">split</span><span class="p">()])</span>
+<span class="go">&#39;oday ouyay peaksay igpay atinlay&#39;</span>
 </pre></div>
 </div>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sentence</span> <span class="o">=</span> <span class="s1">&#39;Pig Latin, or &quot;{pig latin},&quot; is spoken by...&#39;</span>
@@ -110,7 +108,7 @@ and methods for constructing context-dependent rewrite rules (<code class="xref 
 <dt>
 <em class="property">class </em><code class="descname">fsa</code><span class="sig-paren">(</span><em>*items</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fsa"><span class="viewcode-link">[source]</span></a></dt>
 <dd><p>Return a new finite state acceptor. The acceptor behaves like a set whose
-elements are <em>items</em>, or are taken from <em>iterator.</em> Elements must all be
+elements are <em>items</em>, or are taken from <em>iterable.</em> Elements must all be
 strings, or must all be members of another class that implements
 <code class="docutils literal"><span class="pre">fsm_serialize</span></code> and <code class="docutils literal"><span class="pre">fsm_deserialize</span></code> methods for
 conversion to and from strings.</p>
@@ -189,10 +187,16 @@ in <em>other</em>.</p>
 <dl class="class">
 <dt id="fsmcontainers.fsmcontainers.fst">
 <em class="property">class </em><code class="descname">fst</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
 <dt>
-<em class="property">class </em><code class="descname">fst</code><span class="sig-paren">(</span><em>mapping</em>, <em>**kwargs</em><span class="sig-paren">)</span></dt>
+<em class="property">class </em><code class="descname">fst</code><span class="sig-paren">(</span><em>mapping</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fst"><span class="viewcode-link">[source]</span></a></dt>
+<dd></dd></dl>
+
+<dl class="class">
 <dt>
-<em class="property">class </em><code class="descname">fst</code><span class="sig-paren">(</span><em>iterable</em>, <em>**kwargs</em><span class="sig-paren">)</span></dt>
+<em class="property">class </em><code class="descname">fst</code><span class="sig-paren">(</span><em>iterable</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fst"><span class="viewcode-link">[source]</span></a></dt>
 <dd><p>Return a new finite state transducer. The transducer behaves like a
 dictionary or other mapping object, and <a class="reference internal" href="#fsmcontainers.fsmcontainers.fst" title="fsmcontainers.fsmcontainers.fst"><code class="xref py py-class docutils literal"><span class="pre">fst</span></code></a> can be called with any
 of the same argument combinations as <code class="xref py py-class docutils literal"><span class="pre">dict</span></code>, with the same semantics
@@ -225,38 +229,6 @@ that key will return one arbitrary value.</p>
 <p>In addition to the standard Python dictionary operations, fsts provide
 the following:</p>
 <dl class="method">
-<dt id="fsmcontainers.fsmcontainers.fst.getall">
-<code class="descname">getall</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.getall" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="describe">
-<dt>
-<code class="descname">t.all[key]</code></dt>
-<dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fsa" title="fsmcontainers.fsmcontainers.fsa"><code class="xref py py-class docutils literal"><span class="pre">fsa</span></code></a> containing all the values corresponding to <em>key</em>,
-rather than just one.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="fsmcontainers.fsmcontainers.fst.query">
-<code class="descname">query</code><span class="sig-paren">(</span><em>iterable</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fst.query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.query" title="Permalink to this definition">¶</a></dt>
-<dt>
-<code class="descname">query</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span></dt>
-<dd><p>Treat non-string <em>iterable</em> as a collection of keys, or <em>string</em> as a single
-key, and return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fsa" title="fsmcontainers.fsmcontainers.fsa"><code class="xref py py-class docutils literal"><span class="pre">fsa</span></code></a> containing all the values which
-correspond to any key.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="n">fst</span><span class="p">([(</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;one&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;II&#39;</span><span class="p">,</span> <span class="s1">&#39;two&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;III&#39;</span><span class="p">,</span> <span class="s1">&#39;three&#39;</span><span class="p">),</span>
-<span class="gp">... </span>             <span class="p">(</span><span class="s1">&#39;IV&#39;</span><span class="p">,</span> <span class="s1">&#39;four&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="s1">&#39;five&#39;</span><span class="p">)])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;IV&#39;</span><span class="p">)</span>
-<span class="go">fsa([&#39;four&#39;])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="s1">&#39;IV&#39;</span><span class="p">))</span>
-<span class="go">fsa([&#39;one&#39;, &#39;five&#39;])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span><span class="o">.</span><span class="n">query</span><span class="p">({</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;III&#39;</span><span class="p">})</span>
-<span class="go">fsa([&#39;one&#39;, &#39;three&#39;])</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
 <dt id="fsmcontainers.fsmcontainers.fst.keyset">
 <code class="descname">keyset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fst.keyset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.keyset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the keys in the current instance as an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fsa" title="fsmcontainers.fsmcontainers.fsa"><code class="xref py py-class docutils literal"><span class="pre">fsa</span></code></a> rather than
@@ -272,23 +244,12 @@ an iterator.</p>
 
 <dl class="describe">
 <dt>
-<code class="descname">this + other</code></dt>
-<dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fst" title="fsmcontainers.fsmcontainers.fst"><code class="xref py py-class docutils literal"><span class="pre">fst</span></code></a> whose key-value pairs consist of
-key-value pairs from <em>this</em> concatenated with key-value pairs from <em>other</em>.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fst</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">})</span> <span class="o">+</span> <span class="n">fst</span><span class="p">({</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="s1">&#39;d&#39;</span><span class="p">})</span>
-<span class="go">fst([(&#39;ac&#39;, &#39;bd&#39;)])</span>
-</pre></div>
-</div>
-</dd></dl>
+<code class="descname">this &#64; other ...</code></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="fsmcontainers.fsmcontainers.fst.compose">
-<code class="descname">compose</code><span class="sig-paren">(</span><em>*others</em><span class="sig-paren">)</span><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.compose" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="describe">
-<dt>
-<code class="descname">this &#64; other ...</code></dt>
+<code class="descname">compose</code><span class="sig-paren">(</span><em>*others</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fst.compose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.compose" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fst" title="fsmcontainers.fsmcontainers.fst"><code class="xref py py-class docutils literal"><span class="pre">fst</span></code></a> whose key-value mapping comes from composing
 <em>this</em> with each of the others in turn.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">fst</span><span class="p">({</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;intermediate&#39;</span><span class="p">})</span>
@@ -299,22 +260,18 @@ key-value pairs from <em>this</em> concatenated with key-value pairs from <em>ot
 </div>
 </dd></dl>
 
-<dl class="method">
-<dt id="fsmcontainers.fsmcontainers.fst.union">
-<code class="descname">union</code><span class="sig-paren">(</span><em>*others</em><span class="sig-paren">)</span><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.union" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="describe">
 <dt>
-<code class="descname">this | other ...</code></dt>
-<dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fst" title="fsmcontainers.fsmcontainers.fst"><code class="xref py py-class docutils literal"><span class="pre">fst</span></code></a> with key-value pairs from this and all
-others.</p>
+<code class="descname">this &#64;= other</code></dt>
+<dd><p>Update <em>this</em> in place by composing it with <em>other</em>.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">fst</span><span class="p">({</span><span class="s1">&#39;input&#39;</span><span class="p">:</span> <span class="s1">&#39;intermediate&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">fst</span><span class="p">({</span><span class="s1">&#39;intermediate&#39;</span><span class="p">:</span> <span class="s1">&#39;output&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">@=</span> <span class="n">t</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span>
+<span class="go">&#39;output&#39;</span>
+</pre></div>
+</div>
 </dd></dl>
-
-<dl class="method">
-<dt id="fsmcontainers.fsmcontainers.fst.priority_union">
-<code class="descname">priority_union</code><span class="sig-paren">(</span><em>*others</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fst.priority_union"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.priority_union" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="describe">
 <dt>
@@ -324,11 +281,16 @@ others.</p>
 <dl class="describe">
 <dt>
 <code class="descname">... other &lt;&lt; this</code></dt>
-<dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fst" title="fsmcontainers.fsmcontainers.fst"><code class="xref py py-class docutils literal"><span class="pre">fst</span></code></a> that behaves like a <code class="xref py py-class docutils literal"><span class="pre">collections.ChainMap</span></code>,
-chaining together multiple underlying mappings. For each key, the underlying
-mappings are searched in turn, and the key is mapped to the first
-corresponding value that is found. Suppose the mappings <em>f</em>, <em>g</em>, and
-<em>h</em> are as follows:</p>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="fsmcontainers.fsmcontainers.fst.priority_union">
+<code class="descname">priority_union</code><span class="sig-paren">(</span><em>*others</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fst.priority_union"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.priority_union" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fst" title="fsmcontainers.fsmcontainers.fst"><code class="xref py py-class docutils literal"><span class="pre">fst</span></code></a> that behaves like a
+<code class="xref py py-class docutils literal"><span class="pre">collections.ChainMap</span></code>, chaining together multiple underlying
+mappings. For each key, the underlying mappings are searched in turn,
+and the key is mapped to the first corresponding value that is found.
+Suppose the mappings <em>f</em>, <em>g</em>, and <em>h</em> are as follows:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">fst</span><span class="p">({</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">g</span> <span class="o">=</span> <span class="n">fst</span><span class="p">({</span><span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span>           <span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="s2">&quot;2&quot;</span><span class="p">})</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">fst</span><span class="p">({</span>          <span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">:</span> <span class="s2">&quot;3&quot;</span><span class="p">})</span>
@@ -343,16 +305,65 @@ corresponding value that is found. Suppose the mappings <em>f</em>, <em>g</em>, 
 </div>
 </dd></dl>
 
-<dl class="method">
-<dt id="fsmcontainers.fsmcontainers.fst.star">
-<code class="descname">star</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.star" title="Permalink to this definition">¶</a></dt>
-<dt id="fsmcontainers.fsmcontainers.fst.plus">
-<code class="descname">plus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#fsmcontainers.fsmcontainers.fst.plus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fst" title="fsmcontainers.fsmcontainers.fst"><code class="xref py py-class docutils literal"><span class="pre">fst</span></code></a> whose key-value pairs consist of
-key-value pairs from the current instance concatenated together zero or
-more times (for <cite>star</cite>), or one or more times (for <cite>plus</cite>).</p>
+<dl class="describe">
+<dt>
+<code class="descname">this &gt;&gt;= other</code></dt>
+<dd><p>Update <em>this</em> in place by adding any mappings from <em>other</em> whose key is
+not already in <em>this</em>. This operation is an in-place version of rightward
+priority union, giving mappings in <em>this</em> priority over those in <em>other</em>.</p>
+<p><em>Other</em> can also be an acceptor rather than a transducer. In that case,
+the outcome is:</p>
+<blockquote>
+<div><ul class="simple">
+<li>All keys in <em>this</em> are mapped to their value in <em>this.</em></li>
+<li>All elements in <em>other</em> that aren&#8217;t keys in <em>this</em> are mapped to
+themselves.</li>
+</ul>
+</div></blockquote>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">fst</span><span class="p">({</span><span class="s2">&quot;pig&quot;</span><span class="p">:</span> <span class="s2">&quot;igpay&quot;</span><span class="p">,</span> <span class="s2">&quot;latin&quot;</span><span class="p">:</span> <span class="s2">&quot;atinlay&quot;</span><span class="p">,</span> <span class="s2">&quot;words&quot;</span><span class="p">:</span> <span class="s2">&quot;ordsway&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">g</span> <span class="o">=</span> <span class="n">fsa</span><span class="p">(</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="s2">&quot;english&quot;</span><span class="p">,</span> <span class="s2">&quot;words&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">&gt;&gt;=</span> <span class="n">g</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;pig&#39;</span><span class="p">]</span>
+<span class="go">&#39;igpay&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;words&#39;</span><span class="p">]</span>
+<span class="go">&#39;ordsway&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;english&#39;</span><span class="p">]</span>
+<span class="go">&#39;english&#39;</span>
+</pre></div>
+</div>
 </dd></dl>
 
+<dl class="describe">
+<dt>
+<code class="descname">this &lt;&lt;= other</code></dt>
+<dd><p>Update <em>this</em> in place by adding all mappings from <em>other</em>, overwriting
+those whose key is already in <em>this</em>. This operation is an in-place
+version of leftward priority union, giving mappings in <em>other</em> priority
+over those in <a href="#id2"><span class="problematic" id="id3">*</span></a>this.</p>
+<p><em>Other</em> can also be an acceptor rather than a transducer. In that case,
+the outcome is:</p>
+<blockquote>
+<div><ul class="simple">
+<li>All elements in <em>other</em> are mapped to themselves.</li>
+<li>All keys in <em>this</em> that aren&#8217;t elements in <em>other</em> are mapped to
+their value in <em>this</em>.</li>
+</ul>
+</div></blockquote>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">fst</span><span class="p">({</span><span class="s2">&quot;pig&quot;</span><span class="p">:</span> <span class="s2">&quot;igpay&quot;</span><span class="p">,</span> <span class="s2">&quot;latin&quot;</span><span class="p">:</span> <span class="s2">&quot;atinlay&quot;</span><span class="p">,</span> <span class="s2">&quot;words&quot;</span><span class="p">:</span> <span class="s2">&quot;ordsway&quot;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">g</span> <span class="o">=</span> <span class="n">fsa</span><span class="p">(</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="s2">&quot;english&quot;</span><span class="p">,</span> <span class="s2">&quot;words&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">&lt;&lt;=</span> <span class="n">g</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;pig&#39;</span><span class="p">]</span>
+<span class="go">&#39;igpay&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;words&#39;</span><span class="p">]</span>
+<span class="go">&#39;words&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;english&#39;</span><span class="p">]</span>
+<span class="go">&#39;english&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<p>And they provide all of the <a class="reference internal" href="#shared-operations">shared operations</a> documented in the following
+section:</p>
 </dd></dl>
 
 </div>
@@ -371,8 +382,8 @@ and provide the following operations:</p>
 <dl class="method">
 <dt id="fsmcontainers.fsmcontainers.fsmcontainer.concatenate">
 <code class="descname">concatenate</code><span class="sig-paren">(</span><em>*others</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fsmcontainer.concatenate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fsmcontainers.fsmcontainers.fsmcontainer.concatenate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fsa" title="fsmcontainers.fsmcontainers.fsa"><code class="xref py py-class docutils literal"><span class="pre">fsa</span></code></a> whose elements are made up of an element
-of <em>s</em> concatenated with an element of <em>t</em>.</p>
+<dd><p>Return an fsm whose items are made up of an item
+from <em>self</em> concatenated with an item of each of the <em>others</em>.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">this</span> <span class="o">=</span> <span class="n">fsa</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">other</span> <span class="o">=</span> <span class="n">fsa</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">sorted</span><span class="p">(</span><span class="n">this</span> <span class="o">+</span> <span class="n">other</span><span class="p">)</span>
@@ -402,8 +413,8 @@ together zero or more elements from the current instance.</p>
 <dl class="method">
 <dt id="fsmcontainers.fsmcontainers.fsmcontainer.plus">
 <code class="descname">plus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fsmcontainer.plus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fsmcontainers.fsmcontainers.fsmcontainer.plus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fsa" title="fsmcontainers.fsmcontainers.fsa"><code class="xref py py-class docutils literal"><span class="pre">fsa</span></code></a> whose elements are made by concatenating
-together one or more elements from the current instance.</p>
+<dd><p>Return an <a class="reference internal" href="#fsmcontainers.fsmcontainers.fsmcontainer" title="fsmcontainers.fsmcontainers.fsmcontainer"><code class="xref py py-class docutils literal"><span class="pre">fsmcontainer</span></code></a> whose elements are made by
+concatenating together one or more elements from the current instance.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="n">fsa</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">})</span><span class="o">.</span><span class="n">plus</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="s1">&#39;a&#39;</span> <span class="ow">in</span> <span class="n">t</span>
 <span class="go">True</span>
@@ -425,8 +436,9 @@ together one or more elements from the current instance.</p>
 <dl class="method">
 <dt id="fsmcontainers.fsmcontainers.fsmcontainer.__len__">
 <code class="descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fsmcontainers/fsmcontainers.html#fsmcontainer.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fsmcontainers.fsmcontainers.fsmcontainer.__len__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the number of elements in <em>a</em>. If <em>a</em> is a cyclic acceptor with an
-infinite number of elements, return <code class="docutils literal"><span class="pre">float('inf')</span></code>.</p>
+<dd><p>Return the number of elements in this instance. If this is a cyclic
+acceptor with an infinite number of elements, return
+<code class="docutils literal"><span class="pre">float('inf')</span></code>.</p>
 <p>Note that <code class="xref py py-func docutils literal"><span class="pre">len()</span></code> may be quite slow for large finite numbers of
 elements, though it is fast for infinite or small finite numbers. If
 you&#8217;re getting the length of <em>a</em> to compare it to a small number,
