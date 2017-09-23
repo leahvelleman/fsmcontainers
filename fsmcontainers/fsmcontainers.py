@@ -8,10 +8,14 @@ from .serializers import Serializer
 SIGMA = list("qwertyuiopasdfghjkl;'zxcvbnm,./`1234567890-=QWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?~!@#$%^&*()_+ ")
 
 class fsmcontainer(object):
+    """ Abstract base class for containerlike fst and fsa objects. """
     def __init__(self, *args, **kwargs):
+        """ To be implemented by subclasses. """
         return NotImplemented
 
     def _initializeWithPairs(self, pairs):
+        """ Set serializers and initialize a wrapped FSM based on a 
+        sequence of (k,v) pairs. """
         try:
             kproto, vproto, rest = *next(pairs), pairs
                 # Try popping off a (k,v) pair to serve as prototypes for
@@ -30,17 +34,21 @@ class fsmcontainer(object):
     def _initializeWithAttributes(self, fsm,
             keySerializer=Serializer.from_prototype(""),
             valueSerializer=Serializer.from_prototype("")):
+        """ Set serializers and FSM to values that are explicitly given. """
         self.keySerializer = keySerializer
         self.valueSerializer = valueSerializer
         self.fsm = fsm
 
     def _initializeAsCopy(self, other):
+        """ Set serializers and FSM to be identical to those of `other`."""
         self.keySerializer = other.keySerializer
         self.valueSerializer = other.valueSerializer
         self.fsm = other.fsm
 
     @classmethod
     def fromAttributes(cls, fsm, keySerializer, valueSerializer):
+        """ Create a new fsmcontainer from FSM and serializers that are
+        explicitly given. """
         obj = cls.__new__(cls)
         obj._initializeWithAttributes(fsm, keySerializer, valueSerializer)
         return obj
@@ -66,12 +74,16 @@ class fsmcontainer(object):
         return self.valueSerializer.inflate(value)
 
     def __add__(self, other):
+        """
+        Return an fsm whose items are made up of an item
+        from *self* concatenated with an item from *other*.
+        """
         return self._binaryOp(other, op=self.fsm.concatenate)
 
     def concatenate(self, *others):
         """
-        Return an :class:`fsa` whose elements are made up of an element
-        of *s* concatenated with an element of *t*.
+        Return an fsm whose items are made up of an item
+        from *self* concatenated with an item of each of the *others*.
 
         >>> this = fsa('a', 'b')
         >>> other = fsa('c', 'd')
@@ -88,6 +100,10 @@ class fsmcontainer(object):
         return self._binaryOp(other, op=self.fsm.union)
 
     def union(self, *others):
+        """
+        Return an fsm containing all the items from *self* and all the
+        items from each of the *others*.
+        """
         obj = self.copy()
         cls = type(self)
         for other in others:
@@ -95,6 +111,12 @@ class fsmcontainer(object):
         return obj
 
     def _binaryOp(self, other, op):
+        """
+        Helper function for implementing ordinary binary operations with 
+        sum-like semantics. Ensures that the operands have compatible
+        serialization protocols, applies the operation, and sets the
+        protocols on the result.
+        """
         cls = type(self)
         self._typecheck(other)
         return cls.fromAttributes(
@@ -103,6 +125,13 @@ class fsmcontainer(object):
                 valueSerializer=other.valueSerializer)
 
     def _productOp(self, other, operator, cls=None):
+        """
+        Helper function for implementing cross product and composition. Ensures
+        that the operands have compatible serialization protocols, applies the
+        operation, and sets the protocols on the result. Optionally allows the
+        result class to be different from the operand classes, since cross
+        product requires this.
+        """
         cls = cls or type(self)
         if self.valueSerializer != other.keySerializer:
             raise ValueError
@@ -111,19 +140,28 @@ class fsmcontainer(object):
                                   valueSerializer=other.valueSerializer)
 
     def _typecheck(self, *others):
+        """
+        Helper function to check serialization protocol compatibility for
+        binary operations and for context-sensitive rewrite rules.
+        """
         for other in others:
             if self.keySerializer != other.keySerializer:
                 raise ValueError
             if self.valueSerializer != other.valueSerializer:
                 raise ValueError
 
-    def __contains__(self, key):
-        return self.fsm.accepts(key)
+    def __contains__(self, keyOrElement):
+        """
+        Return true if this instance has *keyOrElement* as an element (for
+        `fsa`) or as a key (for `fst`).
+        """
+        return self.fsm.accepts(keyOrElement)
 
     def __len__(self):
         """
-        Return the number of elements in *a*. If *a* is a cyclic acceptor with an
-        infinite number of elements, return :literal:`float('inf')`.
+        Return the number of elements in this instance. If this is a cyclic
+        acceptor with an infinite number of elements, return
+        :literal:`float('inf')`.
         """
         return len(list(self.fsm.pathIterator()))
 
@@ -163,12 +201,20 @@ class fsmcontainer(object):
         return self.fsm.numPathsCompare(n, op)
 
     def __iter__(self):
+        """ Return an iterator over elements (for an `fsa`) or keys (for an
+        `fst`) in this instance. """
         return self._items("top")
-        # Sides are equivalent for an fsmset; for an fst, we want an
-        # iterator over keys to match stdlib dict behavior, and keys are on
-        # top.
+        # "top" is an ok choice in either case: for `fsa`, because the
+        # sides are equivalent so either side is correct; for `fst`, because we
+        # want keys and keys are on top.
 
     def _items(self, side, limit=None):
+        """ Helper function returning an iterator over objects accepted by the
+        top side or bottom side (as in `iter(fsa)`, `iter(fst)`, `fst.keys()` or
+        `fst.values()`) or object pairs from both sides (as in `fst.items()`).
+        Optionally limit the number of objects or pairs that will be yielded;
+        if this instance is cyclic and no limit is specified, the result will
+        be an error."""
         if side == "both":
             return ((self._inflateKey(k), self._inflateValue(v))
                     for k, v in self.fsm.pathIterator(side="both", limit=limit))
@@ -180,9 +226,16 @@ class fsmcontainer(object):
                     self.fsm.pathIterator(side="bottom", limit=limit))
 
     def __eq__(self, other):
+        """ For an `fsa`, return True if other is an iterable or `fsa` with the
+        same elements as this instance. For an `fst`, return True if other is a
+        mapping or `fst` with the same keys and values associated in the same
+        way, or if it is an iterable containing all of the (k,v) pairs from
+        this instance. """
         cls = type(self)
         other = cls(other)
         return self.fsm == other.fsm
+        # TODO: also check that self and other have compatible serialization
+        # protocols.
 
     def copy(self):
         cls = type(self)
@@ -219,8 +272,8 @@ class fsmcontainer(object):
 
     def plus(self):
         """
-        Return an :class:`fsa` whose elements are made by concatenating
-        together one or more elements from the current instance.
+        Return an :class:`fsmcontainer` whose elements are made by
+        concatenating together one or more elements from the current instance.
       
              >>> t = fsa({'a', 'b'}).plus()
              >>> 'a' in t
@@ -236,11 +289,13 @@ class fsmcontainer(object):
         return cls.fromAttributes(self.fsm.plus(), self.keySerializer,
                 self.valueSerializer)
 
+    def write(self, filename):
+        self.fsm.fsm.write(filename)
 
 class fsa(fsmcontainer):
     """
     Return a new finite state acceptor. The acceptor behaves like a set whose
-    elements are *items*, or are taken from *iterator.* Elements must all be
+    elements are *items*, or are taken from *iterable.* Elements must all be
     strings, or must all be members of another class that implements
     :literal:`fsm_serialize` and :literal:`fsm_deserialize` methods for
     conversion to and from strings.
@@ -295,7 +350,6 @@ class fsa(fsmcontainer):
         else:
             raise TypeError
 
-
     def __repr__(self):
         return self._repr(side="top")
 
@@ -344,7 +398,15 @@ class fsa(fsmcontainer):
         return (self - other) | (other - self)
 
     def __mul__(self, other):
+        """
+        Return an :class:`fst` representing the cross product of *this*
+        and *other.* The resulting fst maps each value in *this* to each value
+        in *other*.
+        """
         return self._productOp(other, self.fsm.cross, cls=fst)
+
+    def __imul__(self, other):
+        raise TypeError("FSA cross-product can't be performed in place.")
 
     def cross(self, other):
         """
@@ -389,11 +451,41 @@ class fsa(fsmcontainer):
 
 
 class fst(fsmcontainer):
+    """
+    Return a new finite state transducer. The transducer behaves like a
+    dictionary or other mapping object, and :class:`fst` can be called with any
+    of the same argument combinations as :class:`dict`, with the same semantics
+    --- subject only to the restriction that its keys and values must be strings,
+    or must be serializable to strings.
+ 
+    >>> a = fst([('a', 'b'), ('c', 'd')], e='f', g='h')
+    >>> a['a']
+    'b'
+    >>> a['e']
+    'f'
+ 
+    In addition, fsts can map a single key to more than one value.  To create an
+    :class:`fst` with this property, call the constructor with an iterable as
+    its positional argument, or use keyword arguments that "shadow" keys in the
+    positional argument.
+ 
+    >>> a = fst([('a', 'b'), ('a', 'c')])
+    >>> b = fst({'a': 'b'}, a='c')
+    >>> a == b
+    True
+ 
+    When an fst maps a single key to more than one value, subscripting with
+    that key will return one arbitrary value.
+ 
+    >>> d = fst([('a', 'b'), ('a', 'c')])
+    >>> d['a'] in {'b', 'c'}
+    True
+    """
     def __init__(self, *args, **kwargs):
         if len(args) > 1:
             raise TypeError("fst expected at most 1 arguments, got 2")
         arg = args[0] if args else []
-        if isinstance(arg, type(self)):
+        if isinstance(arg, type(self)) or isinstance(arg, fsa):
             self._initializeAsCopy(arg)
         else:
             if isinstance(arg, Mapping):
@@ -402,6 +494,12 @@ class fst(fsmcontainer):
                 pairs = arg.__iter__()
             pairs = chain(pairs, kwargs.items())
             self._initializeWithPairs(pairs)
+
+    @classmethod
+    def read(cls, filename):
+        return cls.fromAttributes(PyniniWrapper.fromFilename(filename),
+                Serializer.from_prototype(""),
+                Serializer.from_prototype(""))
 
     def __repr__(self):
         return self._repr(side="both")
@@ -412,26 +510,95 @@ class fst(fsmcontainer):
     def __matmul__(self, other):
         return self._productOp(other, self.fsm.compose, cls=type(self))
 
-    def __rmatmul__(self, other):
-        return other._productOp(self, other.fsm.compose, cls=type(self))
+    def compose(self, *others):
+        """
+        Return an :class:`fst` whose key-value mapping comes from composing
+        *this* with each of the others in turn. 
 
-    def __truediv__(self, other):
-        return self | (~self.keyset() @ other)
-
-    def priority_union(self, *others):
+        >>> s = fst({'input': 'intermediate'})
+        >>> t = fst({'intermediate': 'output'})
+        >>> s @ t
+        fst([('input', 'output')])
+        """
         obj = self.copy()
         cls = type(self)
         for other in others:
-            obj = obj / cls(other)
+            obj = obj @ other
+        return obj
+
+    def __rmatmul__(self, other):
+        return other._productOp(self, other.fsm.compose, cls=type(self))
+
+    def _pu(self, other):
+        cls = type(self)
+        return self | (~self.keyset() @ cls(other))
+
+    def __rshift__(self, other):
+        return self._pu(other)
+
+    def __rlshift__(self, other):
+        return self._pu(other)
+
+    def __lshift__(self, other):
+        cls = type(self)
+        other = cls(other)
+        return other._pu(self)
+
+    def __rrshift__(self, other):
+        cls = type(self)
+        other = cls(other)
+        return other._pu(self)
+
+    def priority_union(self, *others):
+        """
+        Return an :class:`fst` that behaves like a
+        :class:`collections.ChainMap`, chaining together multiple underlying
+        mappings. For each key, the underlying mappings are searched in turn,
+        and the key is mapped to the first corresponding value that is found.
+        Suppose the mappings *f*, *g*, and *h* are as follows::
+
+           >>> f = fst({"a": "1", "b": "1"})
+           >>> g = fst({"a": "2",           "c": "2"})
+           >>> h = fst({          "b": "3", "c": "3", "d": "3"})
+
+        Then the result of a priority union will be as follows::
+
+           >>> f >> g >> h
+           fst([("a", "1"), ("b", "1"), ("c", "2"), ("d", "3")])
+           >>> f << g << h
+           fst([("a", "2"), ("b", "3"), ("c", "3"), ("d", "3")])
+        """
+        obj = self.copy()
+        cls = type(self)
+        for other in others:
+            obj = obj >> cls(other)
         return obj
 
     def query(self, querySet):
+        """
+        Treat non-string *iterable* as a collection of keys, or *string* as a
+        single key, and return an :class:`fsa` containing all the values which
+        correspond to any key.
+   
+            >>> d = fst([('I', 'one'), ('II', 'two'), ('III', 'three'), 
+            ...              ('IV', 'four'), ('V', 'five')])
+            >>> d.query('IV')
+            fsa(['four'])
+            >>> d.query(set('IV'))
+            fsa(['one', 'five'])
+            >>> d.query({'I', 'III'})
+            fsa(['one', 'three'])
+        """
         return (fsa(querySet) @ self).valueset()
 
     def keys(self):
         return self._items(side="top")
 
     def keyset(self):
+        """
+        Return the keys in the current instance as an :class:`fsa` rather than
+        an iterator.
+        """
         return fsa.fromAttributes(fsm=self.fsm.project(side="top"), 
                                      keySerializer=self.valueSerializer,
                                      valueSerializer=self.valueSerializer)
@@ -440,6 +607,10 @@ class fst(fsmcontainer):
         return self._items(side="bottom")
 
     def valueset(self):
+        """
+        Return the values in the current instance as an :class:`fsa` rather than
+        an iterator.
+        """
         return fsa.fromAttributes(fsm=self.fsm.project(side="bottom"), 
                                      keySerializer=self.valueSerializer,
                                      valueSerializer=self.valueSerializer)

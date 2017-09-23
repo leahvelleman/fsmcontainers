@@ -105,6 +105,11 @@ class PyniniWrapper(EngineWrapper):
         return cls.fromPairs(pairs)
 
     @classmethod
+    def fromFilename(cls, filename):
+        fsm = pynini.Fst.read(filename)
+        return cls(fsm)
+
+    @classmethod
     def transducer(cls, fsm1, fsm2):
         if not isinstance(fsm1, cls):
             fsm1 = PyniniWrapper.fromItem(fsm1)

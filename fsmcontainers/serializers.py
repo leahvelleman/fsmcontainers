@@ -86,6 +86,7 @@ class TupleSerializer(Serializer):
         print(bts, seq, tup)
         return tup
 
+
 def take_n_by_n(t, n):
     args = [iter(t)] * n
     return zip(*args)
