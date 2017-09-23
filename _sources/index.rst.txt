@@ -13,7 +13,7 @@ fsmcontainers
    from fsmcontainers.fsmcontainers import fsa, fst
    import operator
 
-This module provides two classes:
+This module provides two classes: 
 
    * :class:`fsa`, a finite-state acceptor that behaves like a Python set.
    * :class:`fst`, a finite-state transducer that behaves like a Python dict.
