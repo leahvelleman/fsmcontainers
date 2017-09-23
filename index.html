@@ -79,13 +79,12 @@ resources or hand-coding new ones.</p>
 </div>
 <p>They are <strong>not</strong> meant to be high-performance replacements for
 built-in <code class="xref py py-class docutils literal"><span class="pre">set</span></code> and <code class="xref py py-class docutils literal"><span class="pre">dict</span></code>.  For very large finite sets of strings
-or mappings between strings, use askdhfa.  For high-performance
+or mappings between strings, use <a class="reference external" href="https://pypi.python.org/pypi/rust-fst">rust-fst</a>.  For high-performance
 potentially-infinite sets of strings, you may be able to use regular
 expressions, with <code class="xref py py-func docutils literal"><span class="pre">re.match()</span></code> as a test of set membership.</p>
 <p>Both classes provide additional operations that are useful in computational
 morphology, including cross product (<code class="docutils literal"><span class="pre">*</span></code>), composition (<code class="docutils literal"><span class="pre">&#64;</span></code>),
-and methods for constructing context-dependent rewrite rules (<code class="xref py py-meth docutils literal"><span class="pre">fst.before()</span></code>,
-<code class="xref py py-meth docutils literal"><span class="pre">fst.after()</span></code>, <code class="xref py py-meth docutils literal"><span class="pre">fst.between()</span></code>, and <code class="xref py py-meth docutils literal"><span class="pre">fst.anywhere()</span></code>).</p>
+and methods for constructing context-dependent rewrite rules.</p>
 <div class="section" id="contents">
 <h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <blockquote>
@@ -93,7 +92,6 @@ and methods for constructing context-dependent rewrite rules (<code class="xref 
 <li><a class="reference internal" href="#finite-state-acceptors">Finite state acceptors</a></li>
 <li><a class="reference internal" href="#finite-state-transducers">Finite state transducers</a></li>
 <li><a class="reference internal" href="#shared-operations">Shared operations</a> which apply to both acceptors and transducers</li>
-<li><a class="reference internal" href="#linguistic-applications">Linguistic applications</a></li>
 </ul>
 </div></blockquote>
 </div>
@@ -512,67 +510,6 @@ fast, while <code class="docutils literal"><span class="pre">len(this)</span> <s
 </dd></dl>
 
 </div>
-<div class="section" id="linguistic-applications">
-<h2>Linguistic applications<a class="headerlink" href="#linguistic-applications" title="Permalink to this headline">¶</a></h2>
-<p>If classes of phonemes are given as lists rather than sets or <a class="reference internal" href="#fsmcontainers.fsmcontainers.fsa" title="fsmcontainers.fsmcontainers.fsa"><code class="xref py py-class docutils literal"><span class="pre">fsa</span></code></a>s, then they can be zipped together and passed to <a class="reference internal" href="#fsmcontainers.fsmcontainers.fst" title="fsmcontainers.fsmcontainers.fst"><code class="xref py py-class docutils literal"><span class="pre">fst</span></code></a> to create a mapping
-from each phoneme in the first class to the corresponding phoneme in the second:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">fsmcontainers</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">k7ichee7</span> <span class="o">=</span> <span class="n">fsmcontainers</span><span class="o">.</span><span class="n">language</span><span class="p">(</span>
-<span class="gp">... </span>             <span class="n">chars</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">ascii</span> <span class="o">|</span> <span class="s2">&quot;á é í ó ú ý ñ ü&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">V_short</span> <span class="o">=</span> <span class="s2">&quot;a e i o u&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">V_long</span> <span class="o">=</span> <span class="s2">&quot;aa ee ii oo uu&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">V_lengthen</span> <span class="o">=</span> <span class="n">k7ichee7</span><span class="o">.</span><span class="n">fst</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">V_short</span><span class="p">,</span> <span class="n">V_long</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">V_shorten</span> <span class="o">=</span> <span class="n">V_lengthen</span><span class="o">.</span><span class="n">inv</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">V_shorten</span><span class="p">[</span><span class="s2">&quot;ii&quot;</span><span class="p">]</span>
-<span class="go">&quot;i&quot;</span>
-</pre></div>
-</div>
-<p>Adding an environment with <code class="xref py py-meth docutils literal"><span class="pre">between()</span></code>, <code class="xref py py-meth docutils literal"><span class="pre">before()</span></code>, or <code class="xref py py-meth docutils literal"><span class="pre">after()</span></code>
-creates a conditional sound change; using <code class="xref py py-attr docutils literal"><span class="pre">anywhere</span></code> creates an unconditional
-one:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">C</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;&#39; b&#39; ch ch&#39; h j k k&#39; l m n o p p&#39;</span>
-<span class="gp">... </span><span class="s2">q q&#39; r s t t&#39; tz tz&#39; w x y&quot;&quot;&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">V</span> <span class="o">=</span> <span class="n">V_short</span> <span class="o">|</span> <span class="n">V_long</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">V_shorten</span><span class="o">.</span><span class="n">before</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">star</span><span class="p">()</span> <span class="o">+</span> <span class="n">V</span><span class="p">)[</span><span class="s2">&quot;nub&#39;aaq&#39;iil&quot;</span><span class="p">]</span>
-<span class="go">&quot;nub&#39;aq&#39;iil&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">V_shorten</span><span class="o">.</span><span class="n">anywhere</span><span class="p">[</span><span class="s2">&quot;nub&#39;aaq&#39;iil&quot;</span><span class="p">]</span>
-<span class="go">&quot;nub&#39;aq&#39;il&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">V_shorten</span><span class="p">[</span><span class="s2">&quot;nub&#39;aaq&#39;iil&quot;</span><span class="p">]</span>
-<span class="go">KeyError</span>
-</pre></div>
-</div>
-<p>Sound changes can be chained together with <code class="docutils literal"><span class="pre">&#64;</span></code>. For instance, K&#8217;ichee&#8217;
-has shortening of vowels in nonfinal syllables, followed by the loss of nonfinal
-underlying <em>h</em> with compensatory lengthening. This can be modeled with three
-ordered changes:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">C</span> <span class="o">|</span> <span class="n">V</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">h_loss</span> <span class="o">=</span> <span class="n">k7ichee7</span><span class="o">.</span><span class="n">fst</span><span class="p">(</span><span class="s2">&quot;h&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">length_changes</span> <span class="o">=</span> <span class="p">(</span><span class="n">V_shorten</span><span class="o">.</span><span class="n">before</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">star</span><span class="p">()</span> <span class="o">+</span> <span class="n">V</span><span class="p">)</span>
-<span class="gp">... </span>                  <span class="o">@</span> <span class="n">V_lengthen</span><span class="o">.</span><span class="n">before</span><span class="p">(</span><span class="s2">&quot;h&quot;</span> <span class="o">+</span> <span class="n">X</span><span class="p">)</span>
-<span class="gp">... </span>                  <span class="o">@</span> <span class="n">h_loss</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">X</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">length_changes</span><span class="p">[</span><span class="s2">&quot;b&#39;aaq&#39;]</span>
-<span class="go">&quot;b&#39;aaq&#39;&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">length_changes</span><span class="p">[</span><span class="s2">&quot;nub&#39;aaq&#39;iil&quot;</span><span class="p">]</span>
-<span class="go">&quot;nub&#39;aq&#39;iil&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">length_changes</span><span class="p">[</span><span class="s2">&quot;b&#39;eh&quot;</span><span class="p">]</span>
-<span class="go">&quot;b&#39;eh&quot;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">length_changes</span><span class="p">[</span><span class="s2">&quot;b&#39;ehnaq&quot;</span><span class="p">]</span>
-<span class="go">&quot;b&#39;eenaq&quot;</span>
-</pre></div>
-</div>
-<p>The <code class="docutils literal"><span class="pre">&lt;&lt;=</span></code> operator is useful for adding exceptions to an existing
-sound change or other rule, since it gives its right operand priority over its
-left one. For instance, if our corpus contains a few names where shortening,
-<em>h</em>-loss, and compensatory lengthening shouldn&#8217;t apply, we can add them in
-after the fact like this:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">exceptions</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;aaron anahí baalam cooper huehuetenango</span>
-<span class="gp">... </span><span class="s2">ixtahuacán lehnhoff nahualá&quot;&quot;&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">length_changes</span> <span class="o">&lt;&lt;=</span> <span class="n">exceptions</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">length_changes</span><span class="p">[</span><span class="s2">&quot;na b&#39;ehnaq ta ri rak&#39;aalaab&#39; ri a baalam?&quot;</span><span class="p">]</span>
-<span class="go">&quot;na b&#39;eenaq ta ri rak&#39;alaab&#39; ri a baalam?&quot;</span>
-</pre></div>
-</div>
-</div>
 </div>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
@@ -613,7 +550,6 @@ domains that tradeoff is acceptable; in others it isn&#8217;t.</p>
 <li><a class="reference internal" href="#finite-state-acceptors">Finite state acceptors</a></li>
 <li><a class="reference internal" href="#finite-state-transducers">Finite state transducers</a></li>
 <li><a class="reference internal" href="#shared-operations">Shared operations</a></li>
-<li><a class="reference internal" href="#linguistic-applications">Linguistic applications</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
