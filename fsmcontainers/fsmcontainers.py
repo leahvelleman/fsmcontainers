@@ -106,6 +106,8 @@ class fsmcontainer(object):
         """
         obj = self.copy()
         cls = type(self)
+        if len(others) == 1 and isinstance(others[0], Iterable):
+            others = others[0]
         for other in others:
             obj = obj | cls(other)
         return obj
@@ -155,7 +157,7 @@ class fsmcontainer(object):
         Return true if this instance has *keyOrElement* as an element (for
         `fsa`) or as a key (for `fst`).
         """
-        return self.fsm.accepts(keyOrElement)
+        return self.fsm.accepts(self.keySerializer.serialize(keyOrElement))
 
     def __len__(self):
         """
@@ -245,7 +247,7 @@ class fsmcontainer(object):
         return obj
 
     def _repr(self, side):
-        contents = list(self._items(side=side, limit=5))
+        contents = sorted(list(self._items(side=side, limit=5)))
         coda = " ... " if len(contents) > 4 else ""
         contents = ", ".join(map(repr, contents[:4])) + coda
         cls = type(self).__name__
@@ -335,20 +337,23 @@ class fsa(fsmcontainer):
             self._initializeAsCopy(items[0])
             return
 
-        # single argument is a list -- unpack it and continue
+        # single argument is an iterable -- unpack it and continue
         elif (len(items) == 1 and isinstance(items[0], Iterable) and not 
                 isinstance(items[0], str)):
-            items = items[0]
+            items = list(items[0]) 
+            # We may need to run through the iterable twice, once to check
+            # its contents and once to generate pairs from it. The call to
+            # list here prevents the first runthrough from using it up.
 
         # multiple str arguments, or a single iterable[str] that got unpacked,
         # or a single empty iterable that got unpacked, or no arguments at all
-        if all(isinstance(i, str) for i in items):
-            pairs = ((i, i) for i in items)
-            self._initializeWithPairs(pairs)
+#        if all(isinstance(i, str) for i in items):
+        pairs = ((i, i) for i in items)
+        self._initializeWithPairs(pairs)
 
         # some other combination of arguments
-        else:
-            raise TypeError
+#        else:
+#            raise TypeError
 
     def __repr__(self):
         return self._repr(side="top")
@@ -564,9 +569,9 @@ class fst(fsmcontainer):
         Then the result of a priority union will be as follows::
 
            >>> f >> g >> h
-           fst([("a", "1"), ("b", "1"), ("c", "2"), ("d", "3")])
+           fst([('a', '1'), ('b', '1'), ('c', '2'), ('d', '3')])
            >>> f << g << h
-           fst([("a", "2"), ("b", "3"), ("c", "3"), ("d", "3")])
+           fst([('a', '2'), ('b', '3'), ('c', '3'), ('d', '3')])
         """
         obj = self.copy()
         cls = type(self)
@@ -585,7 +590,7 @@ class fst(fsmcontainer):
             >>> d.query('IV')
             fsa(['four'])
             >>> d.query(set('IV'))
-            fsa(['one', 'five'])
+            fsa(['five', 'one'])
             >>> d.query({'I', 'III'})
             fsa(['one', 'three'])
         """
